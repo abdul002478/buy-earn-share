@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RecargaRouteImport } from './routes/recarga'
 import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ConvideRouteImport } from './routes/convide'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const ProdutosRoute = ProdutosRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConvideRoute = ConvideRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/convide': typeof ConvideRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/convide': typeof ConvideRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/convide': typeof ConvideRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
@@ -78,16 +87,25 @@ export interface FileRouteTypes {
     | '/'
     | '/cadastro'
     | '/convide'
+    | '/forgot-password'
     | '/login'
     | '/produtos'
     | '/recarga'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cadastro' | '/convide' | '/login' | '/produtos' | '/recarga'
+  to:
+    | '/'
+    | '/cadastro'
+    | '/convide'
+    | '/forgot-password'
+    | '/login'
+    | '/produtos'
+    | '/recarga'
   id:
     | '__root__'
     | '/'
     | '/cadastro'
     | '/convide'
+    | '/forgot-password'
     | '/login'
     | '/produtos'
     | '/recarga'
@@ -97,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CadastroRoute: typeof CadastroRoute
   ConvideRoute: typeof ConvideRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   ProdutosRoute: typeof ProdutosRoute
   RecargaRoute: typeof RecargaRoute
@@ -123,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/convide': {
@@ -153,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CadastroRoute: CadastroRoute,
   ConvideRoute: ConvideRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ProdutosRoute: ProdutosRoute,
   RecargaRoute: RecargaRoute,
