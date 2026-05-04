@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RecargaRouteImport } from './routes/recarga'
 import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ConvideRouteImport } from './routes/convide'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -30,6 +31,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConvideRoute = ConvideRouteImport.update({
+  id: '/convide',
+  path: '/convide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
@@ -44,6 +50,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
+  '/convide': typeof ConvideRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
+  '/convide': typeof ConvideRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
@@ -59,21 +67,36 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
+  '/convide': typeof ConvideRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cadastro' | '/login' | '/produtos' | '/recarga'
+  fullPaths:
+    | '/'
+    | '/cadastro'
+    | '/convide'
+    | '/login'
+    | '/produtos'
+    | '/recarga'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cadastro' | '/login' | '/produtos' | '/recarga'
-  id: '__root__' | '/' | '/cadastro' | '/login' | '/produtos' | '/recarga'
+  to: '/' | '/cadastro' | '/convide' | '/login' | '/produtos' | '/recarga'
+  id:
+    | '__root__'
+    | '/'
+    | '/cadastro'
+    | '/convide'
+    | '/login'
+    | '/produtos'
+    | '/recarga'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CadastroRoute: typeof CadastroRoute
+  ConvideRoute: typeof ConvideRoute
   LoginRoute: typeof LoginRoute
   ProdutosRoute: typeof ProdutosRoute
   RecargaRoute: typeof RecargaRoute
@@ -102,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/convide': {
+      id: '/convide'
+      path: '/convide'
+      fullPath: '/convide'
+      preLoaderRoute: typeof ConvideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cadastro': {
       id: '/cadastro'
       path: '/cadastro'
@@ -122,6 +152,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CadastroRoute: CadastroRoute,
+  ConvideRoute: ConvideRoute,
   LoginRoute: LoginRoute,
   ProdutosRoute: ProdutosRoute,
   RecargaRoute: RecargaRoute,
