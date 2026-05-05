@@ -1,143 +1,194 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { Zap, Smartphone, Gamepad2, Gift, ShieldCheck, Sparkles, ArrowRight } from "lucide-react";
+import {
+  Zap, Gift, ShoppingCart, ArrowRight, CalendarCheck, Wallet,
+  TrendingUp, Sparkles, Clock,
+} from "lucide-react";
+import {
+  PRODUTOS, calcularRendimento, comprarProduto, currentUser,
+  fazerCheckIn, freebieJanelaAberta, freebieRestantesHoje,
+  pegarFreebie, podeCheckIn, useStore,
+} from "@/lib/store";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "RecargaJá — Recarregue saldo e compre na hora" },
-      {
-        name: "description",
-        content:
-          "Adicione saldo na sua carteira, compre produtos digitais e ganhe bônus convidando amigos.",
-      },
+      { title: "RecargaJá — Recarregue, invista e ganhe" },
+      { name: "description", content: "Planos VIP, oferta grátis diária, check-in e bônus por convite." },
     ],
   }),
   component: Index,
 });
 
 function Index() {
+  const user = useStore(() => currentUser());
+  const navigate = useNavigate();
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const vips = PRODUTOS.filter((p) => p.vip);
+  const free = PRODUTOS.find((p) => p.id === "free")!;
+  const rendimento = user ? calcularRendimento(user.id) : { total: 0, futuro: 0, hoje: 0 };
+
+  const onBuy = (id: string) => {
+    if (!user) { navigate({ to: "/cadastro" }); return; }
+    const err = comprarProduto(id);
+    setMsg(err ? { ok: false, text: err } : { ok: true, text: "Produto adquirido!" });
+  };
+
+  const onFree = () => {
+    if (!user) { navigate({ to: "/cadastro" }); return; }
+    const err = pegarFreebie();
+    setMsg(err ? { ok: false, text: err } : { ok: true, text: "Oferta grátis adicionada aos seus produtos!" });
+  };
+
+  const onCheckin = () => {
+    const r = fazerCheckIn();
+    setMsg(r.ok ? { ok: true, text: `Check-in! +${r.valor} MT` } : { ok: false, text: r.msg ?? "Erro" });
+  };
+
+  const janelaOk = freebieJanelaAberta();
+  const restantes = freebieRestantesHoje();
+
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-6xl px-4">
-        {/* Hero */}
-        <section className="relative pt-12 pb-20 md:pt-20 md:pb-28">
-          <div className="animate-float-up">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs font-semibold text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Bônus de R$ 10 no primeiro depósito
-            </span>
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
-              Recarregue. Compre.{" "}
-              <span className="text-gradient-fire">Convide e ganhe.</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-              Carregue saldo na sua carteira RecargaJá e use para comprar produtos
-              digitais em segundos. Indique amigos e ganhe bônus em cada compra.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/cadastro"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary px-6 py-3 text-base font-bold text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
+        {/* Hero / Dashboard */}
+        {user ? (
+          <section className="pt-6 pb-8">
+            <div className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Olá, {user.nome.split(" ")[0]}</p>
+                  <p className="mt-1 flex items-center gap-2 text-3xl font-extrabold">
+                    <Wallet className="h-7 w-7 text-primary" /> {user.saldo} MT
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Link to="/carteira" className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-glow">Depositar / Levantar</Link>
+                  <button
+                    onClick={onCheckin}
+                    disabled={!podeCheckIn()}
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-bold text-primary disabled:opacity-50"
+                  >
+                    <CalendarCheck className="h-4 w-4" />
+                    {podeCheckIn() ? "Check-in diário" : "Check-in feito"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <Stat icon={<TrendingUp className="h-4 w-4" />} label="Rendimento total ganho" value={`${rendimento.total} MT`} />
+                <Stat icon={<Sparkles className="h-4 w-4" />} label="A render (futuro)" value={`${rendimento.futuro} MT`} />
+                <Stat icon={<Clock className="h-4 w-4" />} label="Renda de hoje" value={`${rendimento.hoje} MT`} />
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="pt-12 pb-8">
+            <div className="animate-float-up">
+              <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> Oferta grátis diária às 13:00
+              </span>
+              <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+                Invista. <span className="text-gradient-fire">Renda todo dia.</span>
+              </h1>
+              <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
+                Planos VIP 1 a 10, check-in diário e bônus de 25% por amigo convidado.
+              </p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Link to="/cadastro" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary px-6 py-3 text-base font-bold text-primary-foreground shadow-glow">
+                  Criar conta grátis <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link to="/login" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/60 px-6 py-3 text-base font-bold">
+                  Entrar
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Oferta grátis */}
+        <section className="pb-8">
+          <div className="rounded-2xl border border-primary/40 bg-gradient-fire p-5 text-primary-foreground shadow-glow">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-background/20">
+                  <Gift className="h-6 w-6" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-extrabold">{free.nome} — rendimento {free.rendimentoTotal} MT</h2>
+                  <p className="text-xs opacity-90">
+                    Janela: 13:00 às 13:10 · {restantes}/5 disponíveis hoje · 1 por conta
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onFree}
+                disabled={!!user?.recebeuFreebie}
+                className="rounded-xl bg-background px-5 py-2.5 text-sm font-bold text-foreground disabled:opacity-60"
               >
-                Criar conta grátis <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/produtos"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/60 px-6 py-3 text-base font-bold hover:bg-secondary"
-              >
-                Ver produtos
-              </Link>
+                {user?.recebeuFreebie ? "Já recebido" : janelaOk && restantes > 0 ? "Pegar agora" : "Indisponível"}
+              </button>
             </div>
           </div>
+        </section>
 
-          {/* Floating wallet card */}
-          <div className="mt-14 grid gap-6 md:mt-20 md:grid-cols-[1.1fr_1fr] md:items-center">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {[
-                { k: "+50k", v: "Usuários ativos" },
-                { k: "1M+", v: "Recargas feitas" },
-                { k: "4.9★", v: "Avaliação média" },
-              ].map((s) => (
-                <div
-                  key={s.v}
-                  className="rounded-2xl border border-border bg-gradient-card p-4 shadow-card"
-                >
-                  <div className="text-2xl font-extrabold text-gradient-fire">{s.k}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{s.v}</div>
+        {msg && (
+          <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${msg.ok ? "border-primary/40 bg-primary/10 text-primary" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
+            {msg.text}
+          </div>
+        )}
+
+        {/* Produtos VIP — 2 por linha */}
+        <section className="pb-16">
+          <h2 className="mb-4 text-xl font-extrabold">Produtos VIP</h2>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {vips.map((p) => (
+              <article key={p.id} className="rounded-2xl border border-border bg-gradient-card p-4 shadow-card">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-fire text-primary-foreground">
+                    <ShoppingCart className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-extrabold">{p.nome}</h3>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Plano nível {p.vip}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="relative animate-pulse-glow rounded-3xl border border-primary/30 bg-gradient-card p-6 shadow-card">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  Carteira
-                </span>
-                <Zap className="h-5 w-5 text-primary" />
-              </div>
-              <div className="mt-3 text-4xl font-extrabold tracking-tight">R$ 137,50</div>
-              <div className="mt-1 text-xs text-muted-foreground">Saldo disponível</div>
-              <div className="mt-5 flex items-center gap-2">
-                <Link
-                  to="/recarga"
-                  className="flex-1 rounded-lg bg-gradient-primary py-2.5 text-center text-sm font-bold text-primary-foreground"
-                >
-                  Recarregar
-                </Link>
-                <Link
-                  to="/produtos"
-                  className="flex-1 rounded-lg border border-border bg-background/50 py-2.5 text-center text-sm font-bold"
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div><dt className="text-muted-foreground">Preço</dt><dd className="font-bold">{p.preco} MT</dd></div>
+                  <div><dt className="text-muted-foreground">Dias</dt><dd className="font-bold">{p.duracaoDias}</dd></div>
+                  <div><dt className="text-muted-foreground">/dia</dt><dd className="font-bold text-primary">{p.rendimentoDiario} MT</dd></div>
+                  <div><dt className="text-muted-foreground">Total</dt><dd className="font-bold text-primary">{p.rendimentoTotal} MT</dd></div>
+                </dl>
+                <button
+                  onClick={() => onBuy(p.id)}
+                  className="mt-3 w-full rounded-xl bg-gradient-primary py-2 text-xs font-bold text-primary-foreground shadow-glow"
                 >
                   Comprar
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="grid gap-4 pb-20 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { icon: Zap, title: "Recarga instantânea", desc: "Saldo creditado em segundos via Pix." },
-            { icon: Smartphone, title: "Compra fácil", desc: "Pague com saldo da carteira em 1 toque." },
-            { icon: Gift, title: "Convide e ganhe", desc: "Bônus por cada amigo que se cadastrar." },
-            { icon: ShieldCheck, title: "100% seguro", desc: "Criptografia ponta-a-ponta nas transações." },
-          ].map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-border bg-gradient-card p-5 shadow-card transition-transform hover:-translate-y-1"
-            >
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-primary shadow-glow">
-                <f.icon className="h-5 w-5 text-primary-foreground" />
-              </span>
-              <h3 className="mt-4 text-base font-bold">{f.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* CTA */}
-        <section className="mb-20 overflow-hidden rounded-3xl border border-primary/40 bg-gradient-fire p-8 text-primary-foreground shadow-glow md:p-12">
-          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-            <div>
-              <h2 className="text-2xl font-extrabold md:text-3xl">
-                Convide amigos. Ganhe R$ 5 por cadastro.
-              </h2>
-              <p className="mt-2 max-w-xl opacity-90">
-                Cada amigo que entrar com seu link vira saldo na sua carteira — sem limite.
-              </p>
-            </div>
-            <Link
-              to="/convide"
-              className="inline-flex items-center gap-2 rounded-xl bg-background px-6 py-3 text-base font-bold text-foreground hover:opacity-90"
-            >
-              <Gamepad2 className="h-5 w-5" /> Pegar meu link
-            </Link>
+                </button>
+              </article>
+            ))}
           </div>
         </section>
       </main>
       <SiteFooter />
+    </div>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-secondary/40 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="mt-1 text-xl font-extrabold text-gradient-fire">{value}</div>
     </div>
   );
 }
