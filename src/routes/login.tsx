@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { Mail, Lock, Zap } from "lucide-react";
 import { useState } from "react";
+import { login } from "@/lib/store";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen">
@@ -33,7 +36,13 @@ function LoginPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              alert("Login mockado — backend ainda não conectado.");
+              const u = login(email, senha);
+              if (!u) {
+                setErro("E-mail ou senha incorretos");
+                return;
+              }
+              setErro("");
+              navigate({ to: u.isAdmin ? "/admin" : "/carteira" });
             }}
             className="mt-6 space-y-4"
           >
@@ -53,6 +62,7 @@ function LoginPage() {
               onChange={setSenha}
               placeholder="••••••••"
             />
+            {erro && <p className="text-xs font-medium text-destructive">{erro}</p>}
 
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 text-muted-foreground">
