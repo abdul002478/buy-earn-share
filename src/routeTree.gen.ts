@@ -9,9 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecargaRouteImport } from './routes/recarga'
 import { Route as ProdutosRouteImport } from './routes/produtos'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ConvideRouteImport } from './routes/convide'
@@ -20,11 +20,6 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RecargaRoute = RecargaRouteImport.update({
   id: '/recarga',
   path: '/recarga',
@@ -33,6 +28,11 @@ const RecargaRoute = RecargaRouteImport.update({
 const ProdutosRoute = ProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -79,9 +79,9 @@ export interface FileRoutesByFullPath {
   '/convide': typeof ConvideRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/perfil': typeof PerfilRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
-  '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,9 +91,9 @@ export interface FileRoutesByTo {
   '/convide': typeof ConvideRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/perfil': typeof PerfilRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
-  '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,9 +104,9 @@ export interface FileRoutesById {
   '/convide': typeof ConvideRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/perfil': typeof PerfilRoute
   '/produtos': typeof ProdutosRoute
   '/recarga': typeof RecargaRoute
-  '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,9 +118,9 @@ export interface FileRouteTypes {
     | '/convide'
     | '/forgot-password'
     | '/login'
+    | '/perfil'
     | '/produtos'
     | '/recarga'
-    | '/reset-password'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,9 +130,9 @@ export interface FileRouteTypes {
     | '/convide'
     | '/forgot-password'
     | '/login'
+    | '/perfil'
     | '/produtos'
     | '/recarga'
-    | '/reset-password'
   id:
     | '__root__'
     | '/'
@@ -142,9 +142,9 @@ export interface FileRouteTypes {
     | '/convide'
     | '/forgot-password'
     | '/login'
+    | '/perfil'
     | '/produtos'
     | '/recarga'
-    | '/reset-password'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -155,20 +155,13 @@ export interface RootRouteChildren {
   ConvideRoute: typeof ConvideRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  PerfilRoute: typeof PerfilRoute
   ProdutosRoute: typeof ProdutosRoute
   RecargaRoute: typeof RecargaRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/recarga': {
       id: '/recarga'
       path: '/recarga'
@@ -181,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/produtos'
       fullPath: '/produtos'
       preLoaderRoute: typeof ProdutosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -243,9 +243,9 @@ const rootRouteChildren: RootRouteChildren = {
   ConvideRoute: ConvideRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  PerfilRoute: PerfilRoute,
   ProdutosRoute: ProdutosRoute,
   RecargaRoute: RecargaRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
