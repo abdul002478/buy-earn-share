@@ -4,6 +4,7 @@ import { AuthField } from "@/components/AuthField";
 import { Mail, Lock, User, Zap, Phone, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { register } from "@/lib/store";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({
@@ -76,8 +77,18 @@ function CadastroPage() {
       return;
     }
     setErrors({});
+    const r = register({
+      nome: form.nome,
+      email: form.email,
+      telefone: form.telefone,
+      senha: form.senha,
+    });
+    if (typeof r === "string") {
+      setErrors({ email: r });
+      return;
+    }
     setDone(true);
-    setTimeout(() => navigate({ to: "/login" }), 1600);
+    setTimeout(() => navigate({ to: "/produtos" }), 1200);
   };
 
   const s = strength(form.senha);
