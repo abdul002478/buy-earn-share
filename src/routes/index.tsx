@@ -96,7 +96,7 @@ function Index() {
           <section className="pt-12 pb-8">
             <div className="animate-float-up">
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs font-semibold text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> Oferta grátis diária às 13:00
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> Planos VIP 1 a 10
               </span>
               <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
                 Invista. <span className="text-gradient-fire">Renda todo dia.</span>
