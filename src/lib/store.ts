@@ -229,14 +229,19 @@ export function recuperarSenha(email: string, novaSenha: string): string | null 
   return null;
 }
 
-export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroOrigem: string): string | null {
+export function janelaSaqueAberta(now = new Date()): boolean {
+  const m = now.getHours() * 60 + now.getMinutes();
+  return m >= SAQUE_HORA_INICIO && m <= SAQUE_HORA_FIM;
+}
+
+export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroOrigem: string, comprovante?: string): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
-  if (valor <= 0) return "Valor inválido";
+  if (valor < DEPOSITO_MINIMO) return `Mínimo ${DEPOSITO_MINIMO} MT`;
   const txs = getTxs();
   txs.push({
     id: "t_" + Math.random().toString(36).slice(2, 10),
-    userId: u.id, tipo: "deposito", valor, metodo, numeroOrigem,
+    userId: u.id, tipo: "deposito", valor, metodo, numeroOrigem, comprovante,
     status: "pendente", createdAt: Date.now(),
   });
   saveTxs(txs);
@@ -246,17 +251,21 @@ export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroO
 export function pedirLevantamento(valor: number, metodo: "e-mola" | "mpesa", numeroDestino: string): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
+  if (!janelaSaqueAberta()) return "Saques apenas das 09:30 às 18:30.";
   if (valor < LEVANTAMENTO_MINIMO) return `Mínimo ${LEVANTAMENTO_MINIMO} MT`;
-  if (u.saldo < valor) return "Saldo insuficiente";
+  if ((u.saldoProduzido ?? 0) < valor) return "Saldo produzido insuficiente. Apenas saldo produzido pode ser levantado.";
   const users = getUsers();
   const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].saldo -= valor;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - valor;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   saveUsers(users);
+  const taxa = Math.floor(valor * TAXA_LEVANTAMENTO);
+  const liquido = valor - taxa;
   const txs = getTxs();
   txs.push({
     id: "t_" + Math.random().toString(36).slice(2, 10),
     userId: u.id, tipo: "levantamento", valor, metodo, numeroOrigem: numeroDestino,
-    status: "pendente", createdAt: Date.now(),
+    status: "pendente", createdAt: Date.now(), taxa, liquido,
   });
   saveTxs(txs);
   return null;
