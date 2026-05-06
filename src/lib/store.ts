@@ -347,8 +347,22 @@ export function pegarFreebie(): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
   if (u.recebeuFreebie) return "Você já pegou sua oferta grátis";
-  if (!freebieJanelaAberta()) return "Janela fechada. Disponível das 13:00 às 13:10.";
-  if (freebieRestantesHoje() <= 0) return "Os 5 produtos grátis de hoje acabaram.";
+  if (!freebieJanelaAberta()) return "Indisponível no momento.";
+  if (freebieRestantesHoje() <= 0) return "Esgotado.";
+  const free = PRODUTOS.find((p) => p.id === "free")!;
+  const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  if (total < free.preco) return "Saldo insuficiente. Faça um depósito.";
+  const users = getUsers();
+  const idx = users.findIndex((x) => x.id === u.id);
+  let resto = free.preco;
+  const recarga = users[idx].saldoRecarga ?? 0;
+  const usaRec = Math.min(recarga, resto);
+  users[idx].saldoRecarga = recarga - usaRec;
+  resto -= usaRec;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - resto;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+  users[idx].recebeuFreebie = true;
+  saveUsers(users);
   const hoje = diaStr();
   const list = getFreebies();
   list.push({
@@ -356,11 +370,6 @@ export function pegarFreebie(): string | null {
     userId: u.id, data: hoje, claimedAt: Date.now(),
   });
   saveFreebies(list);
-  const users = getUsers();
-  const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].recebeuFreebie = true;
-  saveUsers(users);
-  const free = PRODUTOS.find((p) => p.id === "free")!;
   const orders = getOrders();
   orders.push({
     id: "o_" + Math.random().toString(36).slice(2, 10),
