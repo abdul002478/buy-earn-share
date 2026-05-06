@@ -407,6 +407,34 @@ export function getEquipe(refCode: string): { nome: string; telefone: string; cr
 }
 
 // ====== Rendimento (calculado em runtime) ======
+export function creditarRendimentos() {
+  const orders = getOrders();
+  const users = getUsers();
+  const agora = Date.now();
+  let mudouOrders = false;
+  let mudouUsers = false;
+  for (const o of orders) {
+    const p = PRODUTOS.find((x) => x.id === o.produtoId);
+    if (!p) continue;
+    const totalMs = p.duracaoDias * 86400000;
+    const fim = o.compradoEm + totalMs;
+    const desde = o.ultimoCredito ?? o.compradoEm;
+    const ate = Math.min(agora, fim);
+    if (ate <= desde) continue;
+    const ganho = (p.rendimentoTotal / totalMs) * (ate - desde);
+    if (ganho <= 0) continue;
+    const idx = users.findIndex((u) => u.id === o.userId);
+    if (idx < 0) continue;
+    users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + ganho;
+    users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+    o.ultimoCredito = ate;
+    mudouOrders = true;
+    mudouUsers = true;
+  }
+  if (mudouOrders) saveOrders(orders);
+  if (mudouUsers) saveUsers(users);
+}
+
 export function calcularRendimento(userId: string) {
   const orders = getOrders().filter((o) => o.userId === userId);
   let total = 0; // já rendido
