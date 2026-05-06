@@ -114,6 +114,7 @@ function Deposito() {
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState<"e-mola" | "mpesa">("e-mola");
   const [numero, setNumero] = useState("");
+  const [comprovante, setComprovante] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const info = metodo === "e-mola" ? DEPOSITO_INFO.emola : DEPOSITO_INFO.mpesa;
@@ -122,7 +123,8 @@ function Deposito() {
     <div>
       <h2 className="text-xl font-bold">Fazer depósito</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Envie o valor para o número abaixo e depois confirme aqui. Aprovação manual.
+        Mínimo {DEPOSITO_MINIMO} MT. Envie o valor para o número abaixo, cole a mensagem
+        de confirmação e envie. Aprovação manual.
       </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -167,6 +169,17 @@ function Deposito() {
           placeholder="84/85/86…"
         />
       </div>
+      <label className="mt-3 block">
+        <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+          Cole aqui a mensagem de confirmação
+        </span>
+        <textarea
+          value={comprovante}
+          onChange={(e) => setComprovante(e.target.value)}
+          placeholder="Ex.: Confirmado. Você transferiu 200,00 MT para Abibo..."
+          className="min-h-[90px] w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+        />
+      </label>
 
       {msg && (
         <p
@@ -179,11 +192,11 @@ function Deposito() {
       <button
         onClick={() => {
           const v = Number(valor);
-          if (!v || !numero) {
-            setMsg({ ok: false, text: "Preencha valor e número" });
+          if (!v || !numero || !comprovante.trim()) {
+            setMsg({ ok: false, text: "Preencha valor, número e mensagem de confirmação" });
             return;
           }
-          const err = pedirDeposito(v, metodo, numero);
+          const err = pedirDeposito(v, metodo, numero, comprovante.trim());
           if (err) {
             setMsg({ ok: false, text: err });
             return;
@@ -191,6 +204,7 @@ function Deposito() {
           setMsg({ ok: true, text: "Pedido enviado! Aguarde aprovação do admin." });
           setValor("");
           setNumero("");
+          setComprovante("");
         }}
         className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow"
       >
