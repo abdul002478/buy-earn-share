@@ -193,6 +193,8 @@ export function register(data: { nome: string; email: string; telefone: string; 
     telefone: data.telefone,
     senha: data.senha,
     saldo: 0,
+    saldoRecarga: 0,
+    saldoProduzido: 0,
     criadoEm: Date.now(),
     refCode: genRef(),
     referredBy: data.ref?.toUpperCase(),
