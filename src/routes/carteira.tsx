@@ -2,25 +2,24 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
   DEPOSITO_INFO,
+  DEPOSITO_MINIMO,
   LEVANTAMENTO_MINIMO,
-  PRODUTOS,
+  TAXA_LEVANTAMENTO,
+  creditarRendimentos,
+  janelaSaqueAberta,
   currentUser,
-  getOrders,
-  getTxs,
   pedirDeposito,
   pedirLevantamento,
   useStore,
-  logout,
 } from "@/lib/store";
 import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  History,
-  Package,
   Wallet,
   Copy,
-  LogOut,
+  Sparkles,
+  PiggyBank,
 } from "lucide-react";
 
 export const Route = createFileRoute("/carteira")({
@@ -33,10 +32,11 @@ export const Route = createFileRoute("/carteira")({
   component: CarteiraPage,
 });
 
-type Aba = "deposito" | "levantamento" | "historico" | "produtos";
+type Aba = "deposito" | "levantamento";
 
 function CarteiraPage() {
   const navigate = useNavigate();
+  useEffect(() => { creditarRendimentos(); }, []);
   const user = useStore(() => currentUser());
   const [aba, setAba] = useState<Aba>("deposito");
 
@@ -49,8 +49,6 @@ function CarteiraPage() {
   const tabs: { id: Aba; label: string; icon: React.ReactNode }[] = [
     { id: "deposito", label: "Depósito", icon: <ArrowDownToLine className="h-4 w-4" /> },
     { id: "levantamento", label: "Levantamento", icon: <ArrowUpFromLine className="h-4 w-4" /> },
-    { id: "historico", label: "Histórico", icon: <History className="h-4 w-4" /> },
-    { id: "produtos", label: "Meus produtos", icon: <Package className="h-4 w-4" /> },
   ];
 
   return (
@@ -58,34 +56,30 @@ function CarteiraPage() {
       <SiteHeader />
       <main className="mx-auto max-w-4xl px-4 py-8">
         <header className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                Olá, {user.nome.split(" ")[0]}
-              </p>
-              <p className="mt-1 flex items-center gap-2 text-3xl font-extrabold">
-                <Wallet className="h-7 w-7 text-primary" />
-                {user.saldo} MT
-              </p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            Olá, {user.nome.split(" ")[0]}
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Sparkles className="h-4 w-4 text-primary" /> Saldo produzido (levantável)
+              </div>
+              <p className="mt-1 text-2xl font-extrabold text-primary">{Math.floor(user.saldoProduzido ?? 0)} MT</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                to="/produtos"
-                className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-glow"
-              >
-                Comprar plano
-              </Link>
-              <button
-                onClick={() => {
-                  logout();
-                  navigate({ to: "/login" });
-                }}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-border text-muted-foreground hover:bg-secondary"
-                aria-label="Sair"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+            <div className="rounded-2xl border border-border bg-secondary/40 p-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <PiggyBank className="h-4 w-4" /> Saldo de recarga (apenas compras)
+              </div>
+              <p className="mt-1 text-2xl font-extrabold">{Math.floor(user.saldoRecarga ?? 0)} MT</p>
             </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <Link to="/produtos" className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-glow">
+              Comprar plano
+            </Link>
+            <span className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-2 text-xs">
+              <Wallet className="h-4 w-4 text-primary" /> Total: {Math.floor(user.saldo)} MT
+            </span>
           </div>
         </header>
 
@@ -108,9 +102,7 @@ function CarteiraPage() {
 
         <section className="mt-6 rounded-2xl border border-border bg-gradient-card p-6 shadow-card">
           {aba === "deposito" && <Deposito />}
-          {aba === "levantamento" && <Levantamento saldo={user.saldo} />}
-          {aba === "historico" && <Historico userId={user.id} />}
-          {aba === "produtos" && <MeusProdutos userId={user.id} />}
+          {aba === "levantamento" && <Levantamento saldo={Math.floor(user.saldoProduzido ?? 0)} />}
         </section>
       </main>
       <SiteFooter />
