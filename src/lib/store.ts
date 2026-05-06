@@ -14,6 +14,8 @@ export interface Transacao {
   comprovante?: string;
   createdAt: number;
   produtoId?: string;
+  taxa?: number;
+  liquido?: number;
 }
 
 export interface Produto {
@@ -35,6 +37,7 @@ export interface CompraProduto {
   expiraEm: number;
   rendimentoCreditado: boolean;
   isPrimeiraCompra?: boolean;
+  ultimoCredito?: number;
 }
 
 export interface Usuario {
@@ -43,7 +46,9 @@ export interface Usuario {
   email: string;
   telefone: string;
   senha: string;
-  saldo: number;
+  saldo: number; // legado/total combinado
+  saldoRecarga?: number; // depósitos — não pode levantar
+  saldoProduzido?: number; // rendimentos/check-in/indicação — pode levantar
   criadoEm: number;
   isAdmin?: boolean;
   refCode: string;
@@ -70,7 +75,7 @@ const KEYS = {
 
 // VIP 1 a VIP 10 — 2 por linha, vão até VIP 10
 export const PRODUTOS: Produto[] = [
-  { id: "free", nome: "Oferta Grátis", preco: 0, duracaoDias: 1, rendimentoDiario: 80, rendimentoTotal: 80, bonus: true },
+  { id: "free", nome: "Oferta Grátis", preco: 80, duracaoDias: 1, rendimentoDiario: 100, rendimentoTotal: 100, bonus: true },
   { id: "vip1", nome: "VIP 1", preco: 200, duracaoDias: 30, rendimentoDiario: 20, rendimentoTotal: 600, vip: 1 },
   { id: "vip2", nome: "VIP 2", preco: 500, duracaoDias: 30, rendimentoDiario: 55, rendimentoTotal: 1650, vip: 2 },
   { id: "vip3", nome: "VIP 3", preco: 1000, duracaoDias: 30, rendimentoDiario: 120, rendimentoTotal: 3600, vip: 3 },
@@ -89,6 +94,10 @@ export const DEPOSITO_INFO = {
 };
 
 export const LEVANTAMENTO_MINIMO = 100;
+export const DEPOSITO_MINIMO = 100;
+export const TAXA_LEVANTAMENTO = 0.1; // 10%
+export const SAQUE_HORA_INICIO = 9 * 60 + 30; // 09:30
+export const SAQUE_HORA_FIM = 18 * 60 + 30; // 18:30
 export const FREEBIE_LIMITE_DIA = 5;
 export const FREEBIE_HORA_INICIO = 13;
 export const FREEBIE_MIN_INICIO = 0;
@@ -136,6 +145,14 @@ export function getUsers(): Usuario[] {
   let changed = false;
   for (const u of list) {
     if (!u.refCode) { u.refCode = genRef(); changed = true; }
+    if (u.saldoRecarga === undefined || u.saldoProduzido === undefined) {
+      u.saldoRecarga = u.saldo ?? 0;
+      u.saldoProduzido = 0;
+      changed = true;
+    }
+    // mantém saldo total = recarga + produzido
+    const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+    if (u.saldo !== total) { u.saldo = total; changed = true; }
   }
   if (changed) write(KEYS.users, list);
   return list;
@@ -176,6 +193,8 @@ export function register(data: { nome: string; email: string; telefone: string; 
     telefone: data.telefone,
     senha: data.senha,
     saldo: 0,
+    saldoRecarga: 0,
+    saldoProduzido: 0,
     criadoEm: Date.now(),
     refCode: genRef(),
     referredBy: data.ref?.toUpperCase(),
@@ -210,14 +229,19 @@ export function recuperarSenha(email: string, novaSenha: string): string | null 
   return null;
 }
 
-export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroOrigem: string): string | null {
+export function janelaSaqueAberta(now = new Date()): boolean {
+  const m = now.getHours() * 60 + now.getMinutes();
+  return m >= SAQUE_HORA_INICIO && m <= SAQUE_HORA_FIM;
+}
+
+export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroOrigem: string, comprovante?: string): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
-  if (valor <= 0) return "Valor inválido";
+  if (valor < DEPOSITO_MINIMO) return `Mínimo ${DEPOSITO_MINIMO} MT`;
   const txs = getTxs();
   txs.push({
     id: "t_" + Math.random().toString(36).slice(2, 10),
-    userId: u.id, tipo: "deposito", valor, metodo, numeroOrigem,
+    userId: u.id, tipo: "deposito", valor, metodo, numeroOrigem, comprovante,
     status: "pendente", createdAt: Date.now(),
   });
   saveTxs(txs);
@@ -227,17 +251,21 @@ export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroO
 export function pedirLevantamento(valor: number, metodo: "e-mola" | "mpesa", numeroDestino: string): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
+  if (!janelaSaqueAberta()) return "Saques apenas das 09:30 às 18:30.";
   if (valor < LEVANTAMENTO_MINIMO) return `Mínimo ${LEVANTAMENTO_MINIMO} MT`;
-  if (u.saldo < valor) return "Saldo insuficiente";
+  if ((u.saldoProduzido ?? 0) < valor) return "Saldo produzido insuficiente. Apenas saldo produzido pode ser levantado.";
   const users = getUsers();
   const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].saldo -= valor;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - valor;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   saveUsers(users);
+  const taxa = Math.floor(valor * TAXA_LEVANTAMENTO);
+  const liquido = valor - taxa;
   const txs = getTxs();
   txs.push({
     id: "t_" + Math.random().toString(36).slice(2, 10),
     userId: u.id, tipo: "levantamento", valor, metodo, numeroOrigem: numeroDestino,
-    status: "pendente", createdAt: Date.now(),
+    status: "pendente", createdAt: Date.now(), taxa, liquido,
   });
   saveTxs(txs);
   return null;
@@ -249,10 +277,18 @@ export function comprarProduto(produtoId: string): string | null {
   const p = PRODUTOS.find((x) => x.id === produtoId);
   if (!p) return "Produto não existe";
   if (p.bonus) return "Use o botão de oferta grátis";
-  if (u.saldo < p.preco) return "Saldo insuficiente. Faça um depósito.";
+  const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  if (total < p.preco) return "Saldo insuficiente. Faça um depósito.";
   const users = getUsers();
   const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].saldo -= p.preco;
+  // debita primeiro do saldo de recarga, depois do produzido
+  let resto = p.preco;
+  const recarga = users[idx].saldoRecarga ?? 0;
+  const usaRec = Math.min(recarga, resto);
+  users[idx].saldoRecarga = recarga - usaRec;
+  resto -= usaRec;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - resto;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   const isPrimeira = !users[idx].fezPrimeiraCompra;
   if (isPrimeira) users[idx].fezPrimeiraCompra = true;
   saveUsers(users);
@@ -278,7 +314,8 @@ export function comprarProduto(produtoId: string): string | null {
     const refIdx = users.findIndex((x) => x.refCode === users[idx].referredBy);
     if (refIdx >= 0) {
       const bonus = Math.floor(p.preco * 0.25);
-      users[refIdx].saldo += bonus;
+      users[refIdx].saldoProduzido = (users[refIdx].saldoProduzido ?? 0) + bonus;
+      users[refIdx].saldo = (users[refIdx].saldoRecarga ?? 0) + (users[refIdx].saldoProduzido ?? 0);
       txs.push({
         id: "t_" + Math.random().toString(36).slice(2, 10),
         userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
@@ -310,8 +347,22 @@ export function pegarFreebie(): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
   if (u.recebeuFreebie) return "Você já pegou sua oferta grátis";
-  if (!freebieJanelaAberta()) return "Janela fechada. Disponível das 13:00 às 13:10.";
-  if (freebieRestantesHoje() <= 0) return "Os 5 produtos grátis de hoje acabaram.";
+  if (!freebieJanelaAberta()) return "Indisponível no momento.";
+  if (freebieRestantesHoje() <= 0) return "Esgotado.";
+  const free = PRODUTOS.find((p) => p.id === "free")!;
+  const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  if (total < free.preco) return "Saldo insuficiente. Faça um depósito.";
+  const users = getUsers();
+  const idx = users.findIndex((x) => x.id === u.id);
+  let resto = free.preco;
+  const recarga = users[idx].saldoRecarga ?? 0;
+  const usaRec = Math.min(recarga, resto);
+  users[idx].saldoRecarga = recarga - usaRec;
+  resto -= usaRec;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - resto;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+  users[idx].recebeuFreebie = true;
+  saveUsers(users);
   const hoje = diaStr();
   const list = getFreebies();
   list.push({
@@ -319,11 +370,6 @@ export function pegarFreebie(): string | null {
     userId: u.id, data: hoje, claimedAt: Date.now(),
   });
   saveFreebies(list);
-  const users = getUsers();
-  const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].recebeuFreebie = true;
-  saveUsers(users);
-  const free = PRODUTOS.find((p) => p.id === "free")!;
   const orders = getOrders();
   orders.push({
     id: "o_" + Math.random().toString(36).slice(2, 10),
@@ -349,7 +395,8 @@ export function fazerCheckIn(): { ok: boolean; valor?: number; msg?: string } {
   const valor = Math.floor(Math.random() * 5) + 1; // 1..5
   const users = getUsers();
   const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].saldo += valor;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + valor;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   users[idx].ultimoCheckin = Date.now();
   saveUsers(users);
   const txs = getTxs();
@@ -369,6 +416,34 @@ export function getEquipe(refCode: string): { nome: string; telefone: string; cr
 }
 
 // ====== Rendimento (calculado em runtime) ======
+export function creditarRendimentos() {
+  const orders = getOrders();
+  const users = getUsers();
+  const agora = Date.now();
+  let mudouOrders = false;
+  let mudouUsers = false;
+  for (const o of orders) {
+    const p = PRODUTOS.find((x) => x.id === o.produtoId);
+    if (!p) continue;
+    const totalMs = p.duracaoDias * 86400000;
+    const fim = o.compradoEm + totalMs;
+    const desde = o.ultimoCredito ?? o.compradoEm;
+    const ate = Math.min(agora, fim);
+    if (ate <= desde) continue;
+    const ganho = (p.rendimentoTotal / totalMs) * (ate - desde);
+    if (ganho <= 0) continue;
+    const idx = users.findIndex((u) => u.id === o.userId);
+    if (idx < 0) continue;
+    users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + ganho;
+    users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+    o.ultimoCredito = ate;
+    mudouOrders = true;
+    mudouUsers = true;
+  }
+  if (mudouOrders) saveOrders(orders);
+  if (mudouUsers) saveUsers(users);
+}
+
 export function calcularRendimento(userId: string) {
   const orders = getOrders().filter((o) => o.userId === userId);
   let total = 0; // já rendido
@@ -403,7 +478,10 @@ export function adminAprovarTx(txId: string) {
   const users = getUsers();
   const u = users.find((x) => x.id === t.userId);
   if (!u) return;
-  if (t.tipo === "deposito") u.saldo += t.valor;
+  if (t.tipo === "deposito") {
+    u.saldoRecarga = (u.saldoRecarga ?? 0) + t.valor;
+    u.saldo = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  }
   t.status = "aprovado";
   saveUsers(users);
   saveTxs(txs);
@@ -415,7 +493,10 @@ export function adminNegarTx(txId: string) {
   const users = getUsers();
   const u = users.find((x) => x.id === t.userId);
   if (!u) return;
-  if (t.tipo === "levantamento") u.saldo += t.valor;
+  if (t.tipo === "levantamento") {
+    u.saldoProduzido = (u.saldoProduzido ?? 0) + t.valor;
+    u.saldo = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  }
   t.status = "negado";
   saveUsers(users);
   saveTxs(txs);
@@ -424,7 +505,9 @@ export function adminEditarSaldo(userId: string, novoSaldo: number) {
   const users = getUsers();
   const idx = users.findIndex((u) => u.id === userId);
   if (idx < 0) return;
-  users[idx].saldo = novoSaldo;
+  // edita saldo produzido por padrão (o que pode ser levantado)
+  users[idx].saldoProduzido = novoSaldo;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   saveUsers(users);
 }
 
