@@ -219,14 +219,24 @@ function Levantamento({ saldo }: { saldo: number }) {
   const [metodo, setMetodo] = useState<"e-mola" | "mpesa">("mpesa");
   const [numero, setNumero] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const v = Number(valor) || 0;
+  const taxa = Math.floor(v * TAXA_LEVANTAMENTO);
+  const liquido = Math.max(0, v - taxa);
+  const janela = janelaSaqueAberta();
 
   return (
     <div>
       <h2 className="text-xl font-bold">Pedir levantamento</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Mínimo de <strong>{LEVANTAMENTO_MINIMO} MT</strong>. Aprovação manual pelo admin.
+        Mínimo de <strong>{LEVANTAMENTO_MINIMO} MT</strong>. Taxa de <strong>10%</strong>.
+        Processamento até 5h. Horário: <strong>09:30 às 18:30</strong>.
       </p>
-      <p className="mt-2 text-xs text-muted-foreground">Saldo atual: {saldo} MT</p>
+      <p className="mt-2 text-xs text-muted-foreground">Saldo produzido disponível: {saldo} MT</p>
+      {!janela && (
+        <p className="mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          Fora do horário de saque (09:30 – 18:30).
+        </p>
+      )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <select
@@ -247,6 +257,12 @@ function Levantamento({ saldo }: { saldo: number }) {
           placeholder="84/85/86…"
         />
       </div>
+      {v > 0 && (
+        <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3 text-xs">
+          <div className="flex justify-between"><span>Taxa (10%)</span><span className="font-bold">{taxa} MT</span></div>
+          <div className="mt-1 flex justify-between"><span>Você recebe</span><span className="font-bold text-primary">{liquido} MT</span></div>
+        </div>
+      )}
 
       {msg && (
         <p className={`mt-3 text-sm ${msg.ok ? "text-primary" : "text-destructive"}`}>
@@ -255,6 +271,7 @@ function Levantamento({ saldo }: { saldo: number }) {
       )}
 
       <button
+        disabled={!janela}
         onClick={() => {
           const v = Number(valor);
           if (!v || !numero) {
