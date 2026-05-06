@@ -441,7 +441,10 @@ export function adminAprovarTx(txId: string) {
   const users = getUsers();
   const u = users.find((x) => x.id === t.userId);
   if (!u) return;
-  if (t.tipo === "deposito") u.saldo += t.valor;
+  if (t.tipo === "deposito") {
+    u.saldoRecarga = (u.saldoRecarga ?? 0) + t.valor;
+    u.saldo = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  }
   t.status = "aprovado";
   saveUsers(users);
   saveTxs(txs);
@@ -453,7 +456,10 @@ export function adminNegarTx(txId: string) {
   const users = getUsers();
   const u = users.find((x) => x.id === t.userId);
   if (!u) return;
-  if (t.tipo === "levantamento") u.saldo += t.valor;
+  if (t.tipo === "levantamento") {
+    u.saldoProduzido = (u.saldoProduzido ?? 0) + t.valor;
+    u.saldo = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  }
   t.status = "negado";
   saveUsers(users);
   saveTxs(txs);
@@ -462,7 +468,9 @@ export function adminEditarSaldo(userId: string, novoSaldo: number) {
   const users = getUsers();
   const idx = users.findIndex((u) => u.id === userId);
   if (idx < 0) return;
-  users[idx].saldo = novoSaldo;
+  // edita saldo produzido por padrão (o que pode ser levantado)
+  users[idx].saldoProduzido = novoSaldo;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   saveUsers(users);
 }
 
