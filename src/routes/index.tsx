@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
-  Zap, Gift, ShoppingCart, ArrowRight, CalendarCheck, Wallet,
+  Gift, ShoppingCart, ArrowRight, CalendarCheck, Wallet,
   TrendingUp, Sparkles, Clock,
 } from "lucide-react";
 import {
@@ -55,6 +55,7 @@ function Index() {
 
   const janelaOk = freebieJanelaAberta();
   const restantes = freebieRestantesHoje();
+  const freebieDisponivel = janelaOk && restantes > 0 && !user?.recebeuFreebie;
 
   return (
     <div className="min-h-screen">
@@ -115,32 +116,6 @@ function Index() {
           </section>
         )}
 
-        {/* Oferta grátis */}
-        <section className="pb-8">
-          <div className="rounded-2xl border border-primary/40 bg-gradient-fire p-5 text-primary-foreground shadow-glow">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-background/20">
-                  <Gift className="h-6 w-6" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-extrabold">{free.nome} — rendimento {free.rendimentoTotal} MT</h2>
-                  <p className="text-xs opacity-90">
-                    Janela: 13:00 às 13:10 · {restantes}/5 disponíveis hoje · 1 por conta
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={onFree}
-                disabled={!!user?.recebeuFreebie}
-                className="rounded-xl bg-background px-5 py-2.5 text-sm font-bold text-foreground disabled:opacity-60"
-              >
-                {user?.recebeuFreebie ? "Já recebido" : janelaOk && restantes > 0 ? "Pegar agora" : "Indisponível"}
-              </button>
-            </div>
-          </div>
-        </section>
-
         {msg && (
           <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${msg.ok ? "border-primary/40 bg-primary/10 text-primary" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
             {msg.text}
@@ -151,6 +126,28 @@ function Index() {
         <section className="pb-16">
           <h2 className="mb-4 text-xl font-extrabold">Produtos VIP</h2>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {freebieDisponivel && (
+              <article className="rounded-2xl border border-primary/40 bg-gradient-fire p-4 text-primary-foreground shadow-glow">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-background/20">
+                    <Gift className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-extrabold">{free.nome}</h3>
+                    <p className="text-[10px] uppercase tracking-wider opacity-90">Disponível agora</p>
+                  </div>
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div><dt className="opacity-80">Preço</dt><dd className="font-bold">{free.preco} MT</dd></div>
+                  <div><dt className="opacity-80">Dias</dt><dd className="font-bold">{free.duracaoDias}</dd></div>
+                  <div><dt className="opacity-80">/dia</dt><dd className="font-bold">{free.rendimentoDiario} MT</dd></div>
+                  <div><dt className="opacity-80">Total</dt><dd className="font-bold">{free.rendimentoTotal} MT</dd></div>
+                </dl>
+                <button onClick={onFree} className="mt-3 w-full rounded-xl bg-background py-2 text-xs font-bold text-foreground">
+                  Comprar grátis
+                </button>
+              </article>
+            )}
             {vips.map((p) => (
               <article key={p.id} className="rounded-2xl border border-border bg-gradient-card p-4 shadow-card">
                 <div className="flex items-center gap-2">
