@@ -277,10 +277,18 @@ export function comprarProduto(produtoId: string): string | null {
   const p = PRODUTOS.find((x) => x.id === produtoId);
   if (!p) return "Produto não existe";
   if (p.bonus) return "Use o botão de oferta grátis";
-  if (u.saldo < p.preco) return "Saldo insuficiente. Faça um depósito.";
+  const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  if (total < p.preco) return "Saldo insuficiente. Faça um depósito.";
   const users = getUsers();
   const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].saldo -= p.preco;
+  // debita primeiro do saldo de recarga, depois do produzido
+  let resto = p.preco;
+  const recarga = users[idx].saldoRecarga ?? 0;
+  const usaRec = Math.min(recarga, resto);
+  users[idx].saldoRecarga = recarga - usaRec;
+  resto -= usaRec;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - resto;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   const isPrimeira = !users[idx].fezPrimeiraCompra;
   if (isPrimeira) users[idx].fezPrimeiraCompra = true;
   saveUsers(users);
@@ -306,7 +314,8 @@ export function comprarProduto(produtoId: string): string | null {
     const refIdx = users.findIndex((x) => x.refCode === users[idx].referredBy);
     if (refIdx >= 0) {
       const bonus = Math.floor(p.preco * 0.25);
-      users[refIdx].saldo += bonus;
+      users[refIdx].saldoProduzido = (users[refIdx].saldoProduzido ?? 0) + bonus;
+      users[refIdx].saldo = (users[refIdx].saldoRecarga ?? 0) + (users[refIdx].saldoProduzido ?? 0);
       txs.push({
         id: "t_" + Math.random().toString(36).slice(2, 10),
         userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
