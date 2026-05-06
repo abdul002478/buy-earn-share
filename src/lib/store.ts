@@ -145,6 +145,14 @@ export function getUsers(): Usuario[] {
   let changed = false;
   for (const u of list) {
     if (!u.refCode) { u.refCode = genRef(); changed = true; }
+    if (u.saldoRecarga === undefined || u.saldoProduzido === undefined) {
+      u.saldoRecarga = u.saldo ?? 0;
+      u.saldoProduzido = 0;
+      changed = true;
+    }
+    // mantém saldo total = recarga + produzido
+    const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+    if (u.saldo !== total) { u.saldo = total; changed = true; }
   }
   if (changed) write(KEYS.users, list);
   return list;
