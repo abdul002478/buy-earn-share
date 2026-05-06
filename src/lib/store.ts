@@ -75,7 +75,7 @@ const KEYS = {
 
 // VIP 1 a VIP 10 — 2 por linha, vão até VIP 10
 export const PRODUTOS: Produto[] = [
-  { id: "free", nome: "Oferta Grátis", preco: 0, duracaoDias: 1, rendimentoDiario: 80, rendimentoTotal: 80, bonus: true },
+  { id: "free", nome: "Oferta Grátis", preco: 80, duracaoDias: 1, rendimentoDiario: 100, rendimentoTotal: 100, bonus: true },
   { id: "vip1", nome: "VIP 1", preco: 200, duracaoDias: 30, rendimentoDiario: 20, rendimentoTotal: 600, vip: 1 },
   { id: "vip2", nome: "VIP 2", preco: 500, duracaoDias: 30, rendimentoDiario: 55, rendimentoTotal: 1650, vip: 2 },
   { id: "vip3", nome: "VIP 3", preco: 1000, duracaoDias: 30, rendimentoDiario: 120, rendimentoTotal: 3600, vip: 3 },
