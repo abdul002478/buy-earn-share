@@ -72,7 +72,7 @@ function ProdutosPage() {
                 <div><dt className="opacity-80">Total</dt><dd className="font-bold">{free.rendimentoTotal} MT</dd></div>
               </dl>
               <button onClick={onFree} className="mt-3 w-full rounded-xl bg-background py-2 text-xs font-bold text-foreground">
-                Comprar grátis
+                Comprar
               </button>
             </article>
           )}
