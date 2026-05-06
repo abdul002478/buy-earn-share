@@ -386,7 +386,8 @@ export function fazerCheckIn(): { ok: boolean; valor?: number; msg?: string } {
   const valor = Math.floor(Math.random() * 5) + 1; // 1..5
   const users = getUsers();
   const idx = users.findIndex((x) => x.id === u.id);
-  users[idx].saldo += valor;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + valor;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
   users[idx].ultimoCheckin = Date.now();
   saveUsers(users);
   const txs = getTxs();
