@@ -14,6 +14,8 @@ export interface Transacao {
   comprovante?: string;
   createdAt: number;
   produtoId?: string;
+  taxa?: number;
+  liquido?: number;
 }
 
 export interface Produto {
@@ -35,6 +37,7 @@ export interface CompraProduto {
   expiraEm: number;
   rendimentoCreditado: boolean;
   isPrimeiraCompra?: boolean;
+  ultimoCredito?: number;
 }
 
 export interface Usuario {
@@ -43,7 +46,9 @@ export interface Usuario {
   email: string;
   telefone: string;
   senha: string;
-  saldo: number;
+  saldo: number; // legado/total combinado
+  saldoRecarga?: number; // depósitos — não pode levantar
+  saldoProduzido?: number; // rendimentos/check-in/indicação — pode levantar
   criadoEm: number;
   isAdmin?: boolean;
   refCode: string;
@@ -89,6 +94,10 @@ export const DEPOSITO_INFO = {
 };
 
 export const LEVANTAMENTO_MINIMO = 100;
+export const DEPOSITO_MINIMO = 100;
+export const TAXA_LEVANTAMENTO = 0.1; // 10%
+export const SAQUE_HORA_INICIO = 9 * 60 + 30; // 09:30
+export const SAQUE_HORA_FIM = 18 * 60 + 30; // 18:30
 export const FREEBIE_LIMITE_DIA = 5;
 export const FREEBIE_HORA_INICIO = 13;
 export const FREEBIE_MIN_INICIO = 0;
