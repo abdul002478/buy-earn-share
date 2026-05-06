@@ -85,7 +85,13 @@ function AdminPage() {
                       <p className="text-xs text-muted-foreground">
                         {u?.nome} ({u?.email}) · {t.metodo} · nº {t.numeroOrigem} ·{" "}
                         {new Date(t.createdAt).toLocaleString("pt-BR")}
+                        {t.tipo === "levantamento" && t.taxa !== undefined && (
+                          <> · taxa {t.taxa} MT · líquido {t.liquido} MT</>
+                        )}
                       </p>
+                      {t.comprovante && (
+                        <pre className="mt-1 max-w-xl whitespace-pre-wrap rounded-md border border-border bg-secondary/40 p-2 text-[11px] text-muted-foreground">{t.comprovante}</pre>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <button
