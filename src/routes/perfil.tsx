@@ -3,12 +3,13 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
   currentUser, logout, trocarSenha, useStore,
   getOrders, getTxs, PRODUTOS, creditarRendimentos,
-  getVipNivel, salvarFotoPerfil,
+  getVipNivel, salvarFotoPerfil, calcularRendimento,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
   LogOut, User as UserIcon, KeyRound, Mail, Phone, Calendar,
   Sparkles, PiggyBank, History, Package, Smartphone, Dice5, Gem, Camera, Lock,
+  TrendingUp, Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
@@ -52,11 +53,13 @@ function PerfilPage() {
 
   const txs = getTxs().filter((t) => t.userId === user.id).sort((a, b) => b.createdAt - a.createdAt);
   const orders = getOrders().filter((o) => o.userId === user.id);
+  const rendimento = calcularRendimento(user.id);
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-2xl px-4 py-8">
+        {view === "main" && (
         <header className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
           <div className="flex items-center gap-3">
             <button
@@ -100,6 +103,7 @@ function PerfilPage() {
             </div>
           </div>
         </header>
+        )}
 
         {view === "main" && (
           <>
@@ -177,16 +181,21 @@ function PerfilPage() {
         )}
 
         {view === "produtos" && (
-          <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+          <section className="rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
             <button onClick={() => setView("main")} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
             <h2 className="text-lg font-bold">Meus produtos</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <Stat icon={<TrendingUp className="h-4 w-4" />} label="Renda total" value={`${rendimento.total} MT`} />
+              <Stat icon={<Sparkles className="h-4 w-4" />} label="A render" value={`${rendimento.futuro} MT`} />
+              <Stat icon={<Clock className="h-4 w-4" />} label="Renda hoje" value={`${rendimento.hoje} MT`} />
+            </div>
             {orders.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="mt-4 text-sm text-muted-foreground">
                 Nenhum produto comprado.{" "}
                 <Link to="/produtos" className="font-semibold text-primary hover:underline">Ver planos</Link>
               </p>
             ) : (
-              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                 {orders.map((o) => {
                   const p = PRODUTOS.find((x) => x.id === o.produtoId);
                   if (!p) return null;
@@ -198,7 +207,10 @@ function PerfilPage() {
                         Comprado em {new Date(o.compradoEm).toLocaleDateString("pt-BR")}
                       </p>
                       <p className="mt-1 text-xs">
-                        Rendimento: <span className="font-bold text-primary">{p.rendimentoTotal} MT</span>
+                        Rendimento/dia: <span className="font-bold text-primary">{p.rendimentoDiario} MT</span>
+                      </p>
+                      <p className="text-xs">
+                        Total: <span className="font-bold">{p.rendimentoTotal} MT</span>
                       </p>
                       <p className="mt-1 text-[11px] font-bold uppercase">{ativo ? "Ativo" : "Encerrado"}</p>
                     </li>
@@ -207,6 +219,11 @@ function PerfilPage() {
               </ul>
             )}
           </section>
+        )}
+
+        {view === "historico" && (
+          // already handled above; placeholder to keep compile
+          null
         )}
       </main>
       <SiteFooter />
@@ -256,5 +273,14 @@ function Field({ label, type = "text", value, onChange }: { label: string; type?
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30" />
     </label>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-secondary/40 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="mt-1 text-lg font-extrabold text-gradient-fire">{value}</div>
+    </div>
   );
 }
