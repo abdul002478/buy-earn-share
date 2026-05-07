@@ -1,9 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
   DEPOSITO_INFO,
   DEPOSITO_MINIMO,
-  LEVANTAMENTO_MINIMO,
   TAXA_LEVANTAMENTO,
   creditarRendimentos,
   janelaSaqueAberta,
@@ -16,10 +15,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  Wallet,
   Copy,
-  Sparkles,
-  PiggyBank,
 } from "lucide-react";
 
 export const Route = createFileRoute("/carteira")({
@@ -47,43 +43,15 @@ function CarteiraPage() {
   if (!user) return null;
 
   const tabs: { id: Aba; label: string; icon: React.ReactNode }[] = [
-    { id: "deposito", label: "Depósito", icon: <ArrowDownToLine className="h-4 w-4" /> },
-    { id: "levantamento", label: "Levantamento", icon: <ArrowUpFromLine className="h-4 w-4" /> },
+    { id: "deposito", label: "Recarregar", icon: <ArrowDownToLine className="h-4 w-4" /> },
+    { id: "levantamento", label: "Saquê", icon: <ArrowUpFromLine className="h-4 w-4" /> },
   ];
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <header className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Olá, {user.nome.split(" ")[0]}
-          </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Sparkles className="h-4 w-4 text-primary" /> Saldo produzido (levantável)
-              </div>
-              <p className="mt-1 text-2xl font-extrabold text-primary">{Math.floor(user.saldoProduzido ?? 0)} MT</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-secondary/40 p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <PiggyBank className="h-4 w-4" /> Saldo de recarga (apenas compras)
-              </div>
-              <p className="mt-1 text-2xl font-extrabold">{Math.floor(user.saldoRecarga ?? 0)} MT</p>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-2">
-            <Link to="/produtos" className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-glow">
-              Comprar plano
-            </Link>
-            <span className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-2 text-xs">
-              <Wallet className="h-4 w-4 text-primary" /> Total: {Math.floor(user.saldo)} MT
-            </span>
-          </div>
-        </header>
-
-        <nav className="mt-6 flex flex-wrap gap-2">
+        <nav className="flex flex-wrap gap-2">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -121,10 +89,10 @@ function Deposito() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold">Fazer depósito</h2>
+      <h2 className="text-xl font-bold">Recarregar</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Mínimo {DEPOSITO_MINIMO} MT. Envie o valor para o número abaixo, cole a mensagem
-        de confirmação e envie. Aprovação manual.
+        Mínimo {DEPOSITO_MINIMO} MT. Envie o valor para o número abaixo e cole a mensagem
+        de confirmação.
       </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -201,14 +169,14 @@ function Deposito() {
             setMsg({ ok: false, text: err });
             return;
           }
-          setMsg({ ok: true, text: "Pedido enviado! Aguarde aprovação do admin." });
+          setMsg({ ok: true, text: "Pedido enviado! Processamento em até 5h." });
           setValor("");
           setNumero("");
           setComprovante("");
         }}
         className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow"
       >
-        Confirmar depósito
+        Confirmar recarga
       </button>
     </div>
   );
@@ -226,10 +194,10 @@ function Levantamento({ saldo }: { saldo: number }) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold">Pedir levantamento</h2>
+      <h2 className="text-xl font-bold">Saquê</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Mínimo de <strong>{LEVANTAMENTO_MINIMO} MT</strong>. Taxa de <strong>10%</strong>.
-        Processamento até 5h. Horário: <strong>09:30 às 18:30</strong>.
+        Taxa de <strong>10%</strong>. Processamento até 5h.
+        Horário: <strong>09:30 às 18:30</strong>.
       </p>
       <p className="mt-2 text-xs text-muted-foreground">Saldo produzido disponível: {saldo} MT</p>
       {!janela && (
@@ -283,13 +251,13 @@ function Levantamento({ saldo }: { saldo: number }) {
             setMsg({ ok: false, text: err });
             return;
           }
-          setMsg({ ok: true, text: "Pedido enviado! Aguarde aprovação." });
+          setMsg({ ok: true, text: "Pedido enviado! Processamento em até 5h." });
           setValor("");
           setNumero("");
         }}
         className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow"
       >
-        Pedir levantamento
+        Pedir saquê
       </button>
     </div>
   );
