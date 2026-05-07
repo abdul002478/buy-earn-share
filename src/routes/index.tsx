@@ -2,11 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { AdidasCarousel } from "@/components/AdidasCarousel";
 import {
-  Gift, ShoppingCart, ArrowRight, CalendarCheck, Wallet,
-  TrendingUp, Sparkles, Clock,
+  Gift, ShoppingCart, ArrowRight, CalendarCheck, Sparkles,
 } from "lucide-react";
 import {
-  PRODUTOS, calcularRendimento, comprarProduto, currentUser,
+  PRODUTOS, comprarProduto, currentUser,
   fazerCheckIn, freebieJanelaAberta, freebieRestantesHoje,
   pegarFreebie, podeCheckIn, useStore, getVipNivel,
 } from "@/lib/store";
@@ -35,7 +34,6 @@ function Index() {
 
   const vips = PRODUTOS.filter((p) => p.vip);
   const free = PRODUTOS.find((p) => p.id === "free")!;
-  const rendimento = user ? calcularRendimento(user.id) : { total: 0, futuro: 0, hoje: 0 };
   const vipNivel = user ? getVipNivel(user.id) : 0;
 
   const onBuy = (id: string) => {
@@ -71,31 +69,17 @@ function Index() {
           <section className="pb-8">
             <div className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Olá, <span className="text-primary font-bold">VIP {vipNivel}</span> · {user.nome.split(" ")[0]}
-                  </p>
-                  <p className="mt-1 flex items-center gap-2 text-3xl font-extrabold">
-                    <Wallet className="h-7 w-7 text-primary" /> {user.saldo} MT
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link to="/carteira" className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-glow">Depositar / Levantar</Link>
-                  <button
-                    onClick={onCheckin}
-                    disabled={!podeCheckIn()}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-bold text-primary disabled:opacity-50"
-                  >
-                    <CalendarCheck className="h-4 w-4" />
-                    {podeCheckIn() ? "Check-in diário" : "Check-in feito"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <Stat icon={<TrendingUp className="h-4 w-4" />} label="Rendimento total ganho" value={`${rendimento.total} MT`} />
-                <Stat icon={<Sparkles className="h-4 w-4" />} label="A render (futuro)" value={`${rendimento.futuro} MT`} />
-                <Stat icon={<Clock className="h-4 w-4" />} label="Renda de hoje" value={`${rendimento.hoje} MT`} />
+                <p className="text-sm font-semibold">
+                  Olá, <span className="text-primary font-bold">VIP {vipNivel}</span> · {user.nome.split(" ")[0]}
+                </p>
+                <button
+                  onClick={onCheckin}
+                  disabled={!podeCheckIn()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-bold text-primary disabled:opacity-50"
+                >
+                  <CalendarCheck className="h-4 w-4" />
+                  {podeCheckIn() ? "Check-in diário" : "Check-in feito"}
+                </button>
               </div>
             </div>
           </section>
@@ -184,15 +168,6 @@ function Index() {
         </section>
       </main>
       <SiteFooter />
-    </div>
-  );
-}
-
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-secondary/40 p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
-      <div className="mt-1 text-xl font-extrabold text-gradient-fire">{value}</div>
     </div>
   );
 }
