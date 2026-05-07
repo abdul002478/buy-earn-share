@@ -56,6 +56,7 @@ export interface Usuario {
   recebeuFreebie?: boolean;
   fezPrimeiraCompra?: boolean;
   ultimoCheckin?: number; // timestamp
+  fotoUrl?: string;
 }
 
 export interface FreebieClaim {
