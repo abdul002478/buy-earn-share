@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
   DEPOSITO_INFO,
@@ -15,10 +15,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  Wallet,
   Copy,
-  Sparkles,
-  PiggyBank,
 } from "lucide-react";
 
 export const Route = createFileRoute("/carteira")({
