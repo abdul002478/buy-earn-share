@@ -220,11 +220,6 @@ function PerfilPage() {
             )}
           </section>
         )}
-
-        {view === "historico" && (
-          // already handled above; placeholder to keep compile
-          null
-        )}
       </main>
       <SiteFooter />
     </div>
