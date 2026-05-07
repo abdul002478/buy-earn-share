@@ -119,12 +119,5 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  return (
-    <footer className="mt-20 border-t border-border/60 bg-background/60">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-muted-foreground md:flex-row">
-        <p>© {new Date().getFullYear()} RecargaJá — Recarregue. Compre. Convide.</p>
-        <p className="opacity-80">Feito com energia laranja 🔥</p>
-      </div>
-    </footer>
-  );
+  return null;
 }
