@@ -3,11 +3,12 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
   currentUser, logout, trocarSenha, useStore,
   getOrders, getTxs, PRODUTOS, creditarRendimentos,
+  getVipNivel, salvarFotoPerfil,
 } from "@/lib/store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LogOut, User as UserIcon, KeyRound, Mail, Phone, Calendar,
-  ChevronRight, Sparkles, PiggyBank, History, Package,
+  Sparkles, PiggyBank, History, Package, Smartphone, Dice5, Gem, Camera, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
@@ -20,6 +21,7 @@ function PerfilPage() {
   const user = useStore(() => currentUser());
   const navigate = useNavigate();
   const [view, setView] = useState<"main" | "senha" | "historico" | "produtos">("main");
+  const fileRef = useRef<HTMLInputElement>(null);
   const [antiga, setAntiga] = useState("");
   const [nova, setNova] = useState("");
   const [confirmar, setConfirmar] = useState("");
@@ -27,6 +29,15 @@ function PerfilPage() {
 
   useEffect(() => { if (!user) navigate({ to: "/login" }); }, [user, navigate]);
   if (!user) return null;
+  const vip = getVipNivel(user.id);
+
+  const onPickFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => salvarFotoPerfil(String(r.result));
+    r.readAsDataURL(f);
+  };
 
   const sair = () => { logout(); navigate({ to: "/login" }); };
 
@@ -48,11 +59,27 @@ function PerfilPage() {
       <main className="mx-auto max-w-2xl px-4 py-8">
         <header className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
           <div className="flex items-center gap-3">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow">
-              <UserIcon className="h-7 w-7" />
-            </span>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="relative grid h-16 w-16 place-items-center overflow-hidden rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow"
+              aria-label="Trocar foto"
+            >
+              {user.fotoUrl ? (
+                <img src={user.fotoUrl} alt="Foto" className="h-full w-full object-cover" />
+              ) : (
+                <UserIcon className="h-7 w-7" />
+              )}
+              <span className="absolute bottom-0 right-0 grid h-5 w-5 place-items-center rounded-tl-lg bg-background/90 text-primary">
+                <Camera className="h-3 w-3" />
+              </span>
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFoto} />
             <div>
-              <h1 className="text-xl font-extrabold">{user.nome}</h1>
+              <h1 className="flex items-center gap-2 text-xl font-extrabold">
+                <span className="rounded-md bg-gradient-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">VIP {vip}</span>
+                {user.nome}
+              </h1>
               <p className="text-xs text-muted-foreground">Código: <span className="font-mono">{user.refCode}</span></p>
             </div>
           </div>
@@ -86,13 +113,13 @@ function PerfilPage() {
           </ul>
         </section>
 
-        <section className="mt-5 overflow-hidden rounded-2xl border border-border bg-gradient-card shadow-card">
-          <OptionRow icon={<Package className="h-5 w-5 text-primary" />} label="Meus produtos"
-                     onClick={() => setView("produtos")} />
-          <OptionRow icon={<History className="h-5 w-5 text-primary" />} label="Histórico de transações"
-                     onClick={() => setView("historico")} />
-          <OptionRow icon={<KeyRound className="h-5 w-5 text-primary" />} label="Trocar palavra-passe"
-                     onClick={() => setView("senha")} />
+        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <SquareOption icon={<Package className="h-6 w-6" />} label="Meus produtos" onClick={() => setView("produtos")} />
+          <SquareOption icon={<History className="h-6 w-6" />} label="Histórico" onClick={() => setView("historico")} />
+          <SquareOption icon={<KeyRound className="h-6 w-6" />} label="Trocar senha" onClick={() => setView("senha")} />
+          <SquareOption icon={<Smartphone className="h-6 w-6" />} label="Aplicativo" sub="Em breve" disabled />
+          <SquareOption icon={<Dice5 className="h-6 w-6" />} label="Roleta diária" sub="Em breve" disabled />
+          <SquareOption icon={<Gem className="h-6 w-6" />} label="Fundo de riqueza" sub="Em breve" disabled />
         </section>
 
         <button onClick={sair} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
@@ -196,11 +223,28 @@ function Linha({ icon, label, value }: { icon: React.ReactNode; label: string; v
   );
 }
 
-function OptionRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+function SquareOption({
+  icon, label, sub, onClick, disabled,
+}: { icon: React.ReactNode; label: string; sub?: string; onClick?: () => void; disabled?: boolean }) {
   return (
-    <button onClick={onClick} className="flex w-full items-center justify-between gap-3 border-b border-border px-5 py-4 text-left last:border-b-0 hover:bg-secondary/40">
-      <span className="flex items-center gap-3 text-sm font-semibold">{icon}{label}</span>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    <button
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={`relative flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center shadow-card transition ${
+        disabled
+          ? "cursor-not-allowed border-border/60 bg-secondary/30 text-muted-foreground opacity-70"
+          : "border-border bg-gradient-card hover:border-primary/40 hover:bg-primary/5"
+      }`}
+    >
+      <span className={`grid h-11 w-11 place-items-center rounded-xl ${disabled ? "bg-muted text-muted-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}>
+        {icon}
+      </span>
+      <span className="text-xs font-bold leading-tight">{label}</span>
+      {sub && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase">
+          <Lock className="h-2.5 w-2.5" />{sub}
+        </span>
+      )}
     </button>
   );
 }

@@ -56,6 +56,7 @@ export interface Usuario {
   recebeuFreebie?: boolean;
   fezPrimeiraCompra?: boolean;
   ultimoCheckin?: number; // timestamp
+  fotoUrl?: string;
 }
 
 export interface FreebieClaim {
@@ -508,6 +509,25 @@ export function adminEditarSaldo(userId: string, novoSaldo: number) {
   // edita saldo produzido por padrão (o que pode ser levantado)
   users[idx].saldoProduzido = novoSaldo;
   users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+  saveUsers(users);
+}
+
+export function getVipNivel(userId: string): number {
+  const orders = getOrders().filter((o) => o.userId === userId);
+  let max = 0;
+  for (const o of orders) {
+    const p = PRODUTOS.find((x) => x.id === o.produtoId);
+    if (p?.vip && p.vip > max) max = p.vip;
+  }
+  return max;
+}
+export function salvarFotoPerfil(dataUrl: string) {
+  const u = currentUser();
+  if (!u) return;
+  const users = getUsers();
+  const idx = users.findIndex((x) => x.id === u.id);
+  if (idx < 0) return;
+  users[idx].fotoUrl = dataUrl;
   saveUsers(users);
 }
 

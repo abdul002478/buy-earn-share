@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { AdidasCarousel } from "@/components/AdidasCarousel";
 import {
   Gift, ShoppingCart, ArrowRight, CalendarCheck, Wallet,
   TrendingUp, Sparkles, Clock,
@@ -7,7 +8,7 @@ import {
 import {
   PRODUTOS, calcularRendimento, comprarProduto, currentUser,
   fazerCheckIn, freebieJanelaAberta, freebieRestantesHoje,
-  pegarFreebie, podeCheckIn, useStore,
+  pegarFreebie, podeCheckIn, useStore, getVipNivel,
 } from "@/lib/store";
 import { useEffect, useState } from "react";
 
@@ -35,6 +36,7 @@ function Index() {
   const vips = PRODUTOS.filter((p) => p.vip);
   const free = PRODUTOS.find((p) => p.id === "free")!;
   const rendimento = user ? calcularRendimento(user.id) : { total: 0, futuro: 0, hoje: 0 };
+  const vipNivel = user ? getVipNivel(user.id) : 0;
 
   const onBuy = (id: string) => {
     if (!user) { navigate({ to: "/cadastro" }); return; }
@@ -61,13 +63,18 @@ function Index() {
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-6xl px-4">
+        <div className="pt-4">
+          <AdidasCarousel />
+        </div>
         {/* Hero / Dashboard */}
         {user ? (
-          <section className="pt-6 pb-8">
+          <section className="pb-8">
             <div className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Olá, {user.nome.split(" ")[0]}</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Olá, <span className="text-primary font-bold">VIP {vipNivel}</span> · {user.nome.split(" ")[0]}
+                  </p>
                   <p className="mt-1 flex items-center gap-2 text-3xl font-extrabold">
                     <Wallet className="h-7 w-7 text-primary" /> {user.saldo} MT
                   </p>

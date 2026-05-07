@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Zap, Menu, X, LogOut, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { currentUser, logout, useStore } from "@/lib/store";
@@ -14,11 +14,26 @@ const linksLogado = [
   { to: "/perfil" as const, label: "Perfil" },
 ];
 
+const TITULOS: Record<string, string> = {
+  "/": "Início",
+  "/produtos": "Produtos",
+  "/carteira": "Carteira",
+  "/convide": "Convide",
+  "/perfil": "Perfil",
+  "/login": "Entrar",
+  "/cadastro": "Cadastro",
+  "/admin": "Admin",
+  "/forgot-password": "Recuperar senha",
+  "/recarga": "Recarga",
+};
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const user = useStore(() => currentUser());
   const links = user ? linksLogado : linksPublicos;
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const titulo = TITULOS[path] ?? "Início";
 
   const sair = () => { logout(); navigate({ to: "/login" }); };
 
@@ -29,9 +44,7 @@ export function SiteHeader() {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary shadow-glow">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </span>
-          <span className="text-lg font-extrabold tracking-tight">
-            Recarga<span className="text-gradient-fire">Já</span>
-          </span>
+          <span className="text-lg font-extrabold tracking-tight">{titulo}</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -106,12 +119,5 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  return (
-    <footer className="mt-20 border-t border-border/60 bg-background/60">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-muted-foreground md:flex-row">
-        <p>© {new Date().getFullYear()} RecargaJá — Recarregue. Compre. Convide.</p>
-        <p className="opacity-80">Feito com energia laranja 🔥</p>
-      </div>
-    </footer>
-  );
+  return null;
 }
