@@ -3,13 +3,13 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import {
   currentUser, logout, trocarSenha, useStore,
   getOrders, getTxs, PRODUTOS, creditarRendimentos,
-  getVipNivel, salvarFotoPerfil, calcularRendimento,
+  getVipNivel, salvarFotoPerfil, calcularRendimento, vincularConta,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
   LogOut, User as UserIcon, KeyRound, Mail, Phone, Calendar,
   Sparkles, PiggyBank, History, Package, Smartphone, Dice5, Gem, Camera, Lock,
-  TrendingUp, Clock,
+  TrendingUp, Clock, Link as LinkIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
@@ -21,7 +21,7 @@ function PerfilPage() {
   useEffect(() => { creditarRendimentos(); }, []);
   const user = useStore(() => currentUser());
   const navigate = useNavigate();
-  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos">("main");
+  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular">("main");
   const fileRef = useRef<HTMLInputElement>(null);
   const [antiga, setAntiga] = useState("");
   const [nova, setNova] = useState("");
@@ -121,6 +121,7 @@ function PerfilPage() {
           <SquareOption icon={<Package className="h-6 w-6" />} label="Meus produtos" onClick={() => setView("produtos")} />
           <SquareOption icon={<History className="h-6 w-6" />} label="Histórico" onClick={() => setView("historico")} />
           <SquareOption icon={<KeyRound className="h-6 w-6" />} label="Trocar senha" onClick={() => setView("senha")} />
+          <SquareOption icon={<LinkIcon className="h-6 w-6" />} label="Vincular conta" onClick={() => setView("vincular")} />
           <SquareOption icon={<Smartphone className="h-6 w-6" />} label="Aplicativo" sub="Em breve" disabled />
           <SquareOption icon={<Dice5 className="h-6 w-6" />} label="Roleta diária" sub="Em breve" disabled />
           <SquareOption icon={<Gem className="h-6 w-6" />} label="Fundo de riqueza" sub="Em breve" disabled />
@@ -220,9 +221,62 @@ function PerfilPage() {
             )}
           </section>
         )}
+
+        {view === "vincular" && (
+          <VincularContaView onBack={() => setView("main")} user={user} />
+        )}
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function VincularContaView({
+  onBack, user,
+}: {
+  onBack: () => void;
+  user: ReturnType<typeof currentUser> & object;
+}) {
+  const [metodo, setMetodo] = useState<"e-mola" | "mpesa">(user.contaVincMetodo ?? "mpesa");
+  const [numero, setNumero] = useState(user.contaVincNumero ?? "");
+  const [nome, setNome] = useState(user.contaVincNome ?? "");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <button onClick={onBack} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <LinkIcon className="h-5 w-5 text-primary" /> Vincular conta de saquê
+      </h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Os saques serão enviados sempre para esta conta.
+      </p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const err = vincularConta(metodo, numero, nome);
+          setMsg(err ? { ok: false, text: err } : { ok: true, text: "Conta vinculada!" });
+        }}
+        className="mt-4 grid gap-3"
+      >
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">Método</span>
+          <select
+            value={metodo}
+            onChange={(e) => setMetodo(e.target.value as "e-mola" | "mpesa")}
+            className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm"
+          >
+            <option value="mpesa">M-Pesa</option>
+            <option value="e-mola">E-Mola</option>
+          </select>
+        </label>
+        <Field label="Número (sem +258)" value={numero} onChange={(v) => setNumero(v.replace(/\D/g, ""))} />
+        <Field label="Nome do titular" value={nome} onChange={setNome} />
+        {msg && <p className={`text-sm ${msg.ok ? "text-primary" : "text-destructive"}`}>{msg.text}</p>}
+        <button className="rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
+          Salvar conta
+        </button>
+      </form>
+    </section>
   );
 }
 

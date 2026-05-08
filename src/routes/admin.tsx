@@ -83,7 +83,8 @@ function AdminPage() {
                         {t.tipo} · {t.valor} MT
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {u?.nome} ({u?.email}) · {t.metodo} · nº {t.numeroOrigem} ·{" "}
+                        {u?.nome} ({u?.email}) · {t.metodo} · nº {t.numeroOrigem}
+                        {t.nomePagamento ? ` · ${t.nomePagamento}` : ""} ·{" "}
                         {new Date(t.createdAt).toLocaleString("pt-BR")}
                         {t.tipo === "levantamento" && t.taxa !== undefined && (
                           <> · taxa {t.taxa} MT · líquido {t.liquido} MT</>

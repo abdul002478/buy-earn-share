@@ -19,6 +19,8 @@ export function SiteHeader() {
   const user = useStore(() => currentUser());
   const path = useRouterState({ select: (s) => s.location.pathname });
   const titulo = TITULOS[path] ?? "Início";
+  const isAuthPage = path === "/login" || path === "/cadastro" || path === "/forgot-password";
+  if (isAuthPage) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
