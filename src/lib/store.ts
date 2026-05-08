@@ -16,6 +16,7 @@ export interface Transacao {
   produtoId?: string;
   taxa?: number;
   liquido?: number;
+  nomePagamento?: string; // nome do número (recarga) ou nome da conta vinculada (saque)
 }
 
 export interface Produto {
@@ -57,6 +58,9 @@ export interface Usuario {
   fezPrimeiraCompra?: boolean;
   ultimoCheckin?: number; // timestamp
   fotoUrl?: string;
+  contaVincMetodo?: "e-mola" | "mpesa";
+  contaVincNumero?: string;
+  contaVincNome?: string;
 }
 
 export interface FreebieClaim {
@@ -235,23 +239,24 @@ export function janelaSaqueAberta(now = new Date()): boolean {
   return m >= SAQUE_HORA_INICIO && m <= SAQUE_HORA_FIM;
 }
 
-export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroOrigem: string, comprovante?: string): string | null {
+export function pedirDeposito(valor: number, metodo: "e-mola" | "mpesa", numeroOrigem: string, comprovante?: string, nomePagamento?: string): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
   if (valor < DEPOSITO_MINIMO) return `Mínimo ${DEPOSITO_MINIMO} MT`;
   const txs = getTxs();
   txs.push({
     id: "t_" + Math.random().toString(36).slice(2, 10),
-    userId: u.id, tipo: "deposito", valor, metodo, numeroOrigem, comprovante,
+    userId: u.id, tipo: "deposito", valor, metodo, numeroOrigem, comprovante, nomePagamento,
     status: "pendente", createdAt: Date.now(),
   });
   saveTxs(txs);
   return null;
 }
 
-export function pedirLevantamento(valor: number, metodo: "e-mola" | "mpesa", numeroDestino: string): string | null {
+export function pedirLevantamento(valor: number): string | null {
   const u = currentUser();
   if (!u) return "Não autenticado";
+  if (!u.contaVincNumero || !u.contaVincMetodo) return "Vincule uma conta no perfil antes de sacar.";
   if (!janelaSaqueAberta()) return "Saques apenas das 09:30 às 18:30.";
   if (valor < LEVANTAMENTO_MINIMO) return `Mínimo ${LEVANTAMENTO_MINIMO} MT`;
   if ((u.saldoProduzido ?? 0) < valor) return "Saldo produzido insuficiente. Apenas saldo produzido pode ser levantado.";
@@ -265,7 +270,8 @@ export function pedirLevantamento(valor: number, metodo: "e-mola" | "mpesa", num
   const txs = getTxs();
   txs.push({
     id: "t_" + Math.random().toString(36).slice(2, 10),
-    userId: u.id, tipo: "levantamento", valor, metodo, numeroOrigem: numeroDestino,
+    userId: u.id, tipo: "levantamento", valor,
+    metodo: u.contaVincMetodo, numeroOrigem: u.contaVincNumero, nomePagamento: u.contaVincNome,
     status: "pendente", createdAt: Date.now(), taxa, liquido,
   });
   saveTxs(txs);
@@ -310,20 +316,26 @@ export function comprarProduto(produtoId: string): string | null {
     createdAt: Date.now(), produtoId: p.id,
   });
 
-  // Bônus de indicação 25% da PRIMEIRA compra
-  if (isPrimeira && users[idx].referredBy) {
-    const refIdx = users.findIndex((x) => x.refCode === users[idx].referredBy);
-    if (refIdx >= 0) {
-      const bonus = Math.floor(p.preco * 0.25);
-      users[refIdx].saldoProduzido = (users[refIdx].saldoProduzido ?? 0) + bonus;
-      users[refIdx].saldo = (users[refIdx].saldoRecarga ?? 0) + (users[refIdx].saldoProduzido ?? 0);
-      txs.push({
-        id: "t_" + Math.random().toString(36).slice(2, 10),
-        userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
-        status: "aprovado", createdAt: Date.now(),
-      });
-      saveUsers(users);
+  // Bônus de indicação multinível na PRIMEIRA compra: 25% / 5% / 1%
+  if (isPrimeira) {
+    const percent = [0.25, 0.05, 0.01];
+    let atualRef = users[idx].referredBy;
+    for (let nivel = 0; nivel < percent.length && atualRef; nivel++) {
+      const refIdx = users.findIndex((x) => x.refCode === atualRef);
+      if (refIdx < 0) break;
+      const bonus = Math.floor(p.preco * percent[nivel]);
+      if (bonus > 0) {
+        users[refIdx].saldoProduzido = (users[refIdx].saldoProduzido ?? 0) + bonus;
+        users[refIdx].saldo = (users[refIdx].saldoRecarga ?? 0) + (users[refIdx].saldoProduzido ?? 0);
+        txs.push({
+          id: "t_" + Math.random().toString(36).slice(2, 10),
+          userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
+          status: "aprovado", createdAt: Date.now(),
+        });
+      }
+      atualRef = users[refIdx].referredBy;
     }
+    saveUsers(users);
   }
   saveTxs(txs);
   return null;
@@ -529,6 +541,21 @@ export function salvarFotoPerfil(dataUrl: string) {
   if (idx < 0) return;
   users[idx].fotoUrl = dataUrl;
   saveUsers(users);
+}
+
+export function vincularConta(metodo: "e-mola" | "mpesa", numero: string, nome: string): string | null {
+  const u = currentUser();
+  if (!u) return "Não autenticado";
+  if (!/^8[2-7][0-9]{7}$/.test(numero)) return "Número MZ inválido";
+  if (nome.trim().length < 2) return "Informe o nome";
+  const users = getUsers();
+  const idx = users.findIndex((x) => x.id === u.id);
+  if (idx < 0) return "Usuário não encontrado";
+  users[idx].contaVincMetodo = metodo;
+  users[idx].contaVincNumero = numero;
+  users[idx].contaVincNome = nome.trim();
+  saveUsers(users);
+  return null;
 }
 
 import { useEffect, useState } from "react";
