@@ -20,6 +20,7 @@ export function SiteHeader() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const titulo = TITULOS[path] ?? "Início";
   const isAuthPage = path === "/login" || path === "/cadastro" || path === "/forgot-password";
+  if (isAuthPage) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
@@ -31,7 +32,7 @@ export function SiteHeader() {
           <span className="text-lg font-extrabold tracking-tight">{titulo}</span>
         </Link>
 
-        {!user && !isAuthPage && (
+        {!user && (
           <div className="flex items-center gap-2">
             <>
               <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-secondary">Entrar</Link>
