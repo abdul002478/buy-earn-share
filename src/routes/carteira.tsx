@@ -17,6 +17,7 @@ import {
   ArrowUpFromLine,
   Copy,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/carteira")({
   head: () => ({
@@ -70,7 +71,16 @@ function CarteiraPage() {
 
         <section className="mt-6 rounded-2xl border border-border bg-gradient-card p-6 shadow-card">
           {aba === "deposito" && <Deposito />}
-          {aba === "levantamento" && <Levantamento saldo={Math.floor(user.saldoProduzido ?? 0)} />}
+          {aba === "levantamento" && (
+            <Levantamento
+              saldo={Math.floor(user.saldoProduzido ?? 0)}
+              vinc={
+                user.contaVincNumero && user.contaVincMetodo
+                  ? { metodo: user.contaVincMetodo, numero: user.contaVincNumero, nome: user.contaVincNome ?? "" }
+                  : null
+              }
+            />
+          )}
         </section>
       </main>
       <SiteFooter />
@@ -82,6 +92,7 @@ function Deposito() {
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState<"e-mola" | "mpesa">("e-mola");
   const [numero, setNumero] = useState("");
+  const [nomeNumero, setNomeNumero] = useState("");
   const [comprovante, setComprovante] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -137,6 +148,14 @@ function Deposito() {
           placeholder="84/85/86…"
         />
       </div>
+      <div className="mt-3">
+        <Field
+          label="Nome do número que vai pagar"
+          value={nomeNumero}
+          onChange={setNomeNumero}
+          placeholder="Ex: João Silva"
+        />
+      </div>
       <label className="mt-3 block">
         <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">
           Cole aqui a mensagem de confirmação
@@ -160,11 +179,11 @@ function Deposito() {
       <button
         onClick={() => {
           const v = Number(valor);
-          if (!v || !numero || !comprovante.trim()) {
-            setMsg({ ok: false, text: "Preencha valor, número e mensagem de confirmação" });
+          if (!v || !numero || !nomeNumero.trim() || !comprovante.trim()) {
+            setMsg({ ok: false, text: "Preencha todos os campos" });
             return;
           }
-          const err = pedirDeposito(v, metodo, numero, comprovante.trim());
+          const err = pedirDeposito(v, metodo, numero, comprovante.trim(), nomeNumero.trim());
           if (err) {
             setMsg({ ok: false, text: err });
             return;
@@ -172,6 +191,7 @@ function Deposito() {
           setMsg({ ok: true, text: "Pedido enviado! Processamento em até 5h." });
           setValor("");
           setNumero("");
+          setNomeNumero("");
           setComprovante("");
         }}
         className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow"
@@ -182,10 +202,13 @@ function Deposito() {
   );
 }
 
-function Levantamento({ saldo }: { saldo: number }) {
+function Levantamento({
+  saldo, vinc,
+}: {
+  saldo: number;
+  vinc: { metodo: "e-mola" | "mpesa"; numero: string; nome: string } | null;
+}) {
   const [valor, setValor] = useState("");
-  const [metodo, setMetodo] = useState<"e-mola" | "mpesa">("mpesa");
-  const [numero, setNumero] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const v = Number(valor) || 0;
   const taxa = Math.floor(v * TAXA_LEVANTAMENTO);
@@ -206,24 +229,18 @@ function Levantamento({ saldo }: { saldo: number }) {
         </p>
       )}
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <select
-          value={metodo}
-          onChange={(e) => setMetodo(e.target.value as "e-mola" | "mpesa")}
-          className="rounded-xl border border-border bg-input px-3 py-2.5 text-sm"
-        >
-          <option value="mpesa">M-Pesa</option>
-          <option value="e-mola">E-Mola</option>
-        </select>
-        <Field label="" type="number" value={valor} onChange={setValor} placeholder="Valor (MT)" />
-      </div>
+      {!vinc ? (
+        <div className="mt-4 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-4 text-sm">
+          Vincule a sua conta de pagamento no <Link to="/perfil" className="font-bold text-primary underline">perfil</Link> para sacar.
+        </div>
+      ) : (
+        <div className="mt-4 rounded-xl border border-border bg-secondary/40 p-3 text-xs">
+          <p className="font-semibold uppercase text-muted-foreground">Conta vinculada</p>
+          <p className="mt-1">{vinc.metodo === "mpesa" ? "M-Pesa" : "E-Mola"} · <span className="font-mono font-bold">{vinc.numero}</span> · {vinc.nome}</p>
+        </div>
+      )}
       <div className="mt-3">
-        <Field
-          label="Número que vai receber"
-          value={numero}
-          onChange={setNumero}
-          placeholder="84/85/86…"
-        />
+        <Field label="Valor (MT)" type="number" value={valor} onChange={setValor} placeholder="Valor (MT)" />
       </div>
       {v > 0 && (
         <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3 text-xs">
@@ -239,23 +256,22 @@ function Levantamento({ saldo }: { saldo: number }) {
       )}
 
       <button
-        disabled={!janela}
+        disabled={!janela || !vinc}
         onClick={() => {
           const v = Number(valor);
-          if (!v || !numero) {
-            setMsg({ ok: false, text: "Preencha valor e número" });
+          if (!v) {
+            setMsg({ ok: false, text: "Preencha o valor" });
             return;
           }
-          const err = pedirLevantamento(v, metodo, numero);
+          const err = pedirLevantamento(v);
           if (err) {
             setMsg({ ok: false, text: err });
             return;
           }
           setMsg({ ok: true, text: "Pedido enviado! Processamento em até 5h." });
           setValor("");
-          setNumero("");
         }}
-        className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow"
+        className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
       >
         Pedir saquê
       </button>
