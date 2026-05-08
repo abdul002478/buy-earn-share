@@ -296,19 +296,19 @@ function SquareOption({
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`relative flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center shadow-card transition ${
+      className={`relative flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border p-1.5 text-center shadow-card transition ${
         disabled
           ? "cursor-not-allowed border-border/60 bg-secondary/30 text-muted-foreground opacity-70"
           : "border-border bg-gradient-card hover:border-primary/40 hover:bg-primary/5"
       }`}
     >
-      <span className={`grid h-11 w-11 place-items-center rounded-xl ${disabled ? "bg-muted text-muted-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}>
+      <span className={`grid h-7 w-7 place-items-center rounded-lg ${disabled ? "bg-muted text-muted-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}>
         {icon}
       </span>
-      <span className="text-xs font-bold leading-tight">{label}</span>
+      <span className="text-[10px] font-bold leading-tight">{label}</span>
       {sub && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase">
-          <Lock className="h-2.5 w-2.5" />{sub}
+        <span className="inline-flex items-center gap-0.5 rounded-full bg-muted px-1 py-0.5 text-[8px] font-bold uppercase">
+          <Lock className="h-2 w-2" />{sub}
         </span>
       )}
     </button>
