@@ -117,14 +117,14 @@ function PerfilPage() {
           </ul>
         </section>
 
-        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <SquareOption icon={<Package className="h-6 w-6" />} label="Meus produtos" onClick={() => setView("produtos")} />
-          <SquareOption icon={<History className="h-6 w-6" />} label="Histórico" onClick={() => setView("historico")} />
-          <SquareOption icon={<KeyRound className="h-6 w-6" />} label="Trocar senha" onClick={() => setView("senha")} />
-          <SquareOption icon={<LinkIcon className="h-6 w-6" />} label="Vincular conta" onClick={() => setView("vincular")} />
-          <SquareOption icon={<Smartphone className="h-6 w-6" />} label="Aplicativo" sub="Em breve" disabled />
-          <SquareOption icon={<Dice5 className="h-6 w-6" />} label="Roleta diária" sub="Em breve" disabled />
-          <SquareOption icon={<Gem className="h-6 w-6" />} label="Fundo de riqueza" sub="Em breve" disabled />
+        <section className="mt-5 grid grid-cols-4 gap-2">
+          <SquareOption icon={<Package className="h-4 w-4" />} label="Meus produtos" onClick={() => setView("produtos")} />
+          <SquareOption icon={<History className="h-4 w-4" />} label="Histórico" onClick={() => setView("historico")} />
+          <SquareOption icon={<KeyRound className="h-4 w-4" />} label="Trocar senha" onClick={() => setView("senha")} />
+          <SquareOption icon={<LinkIcon className="h-4 w-4" />} label="Vincular conta" onClick={() => setView("vincular")} />
+          <SquareOption icon={<Smartphone className="h-4 w-4" />} label="Aplicativo" sub="Em breve" disabled />
+          <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" sub="Em breve" disabled />
+          <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" sub="Em breve" disabled />
         </section>
 
         <button onClick={sair} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
