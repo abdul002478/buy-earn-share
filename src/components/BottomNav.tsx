@@ -1,10 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Package, Wallet, Users, User as UserIcon } from "lucide-react";
+import { Home, Wallet, Users, User as UserIcon } from "lucide-react";
 import { currentUser, useStore } from "@/lib/store";
 
 const items = [
   { to: "/" as const, label: "Início", icon: Home, exact: true },
-  { to: "/produtos" as const, label: "Produtos", icon: Package },
   { to: "/carteira" as const, label: "Carteira", icon: Wallet },
   { to: "/convide" as const, label: "Convide", icon: Users },
   { to: "/perfil" as const, label: "Perfil", icon: UserIcon },
