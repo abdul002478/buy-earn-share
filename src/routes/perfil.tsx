@@ -117,14 +117,14 @@ function PerfilPage() {
           </ul>
         </section>
 
-        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <SquareOption icon={<Package className="h-6 w-6" />} label="Meus produtos" onClick={() => setView("produtos")} />
-          <SquareOption icon={<History className="h-6 w-6" />} label="Histórico" onClick={() => setView("historico")} />
-          <SquareOption icon={<KeyRound className="h-6 w-6" />} label="Trocar senha" onClick={() => setView("senha")} />
-          <SquareOption icon={<LinkIcon className="h-6 w-6" />} label="Vincular conta" onClick={() => setView("vincular")} />
-          <SquareOption icon={<Smartphone className="h-6 w-6" />} label="Aplicativo" sub="Em breve" disabled />
-          <SquareOption icon={<Dice5 className="h-6 w-6" />} label="Roleta diária" sub="Em breve" disabled />
-          <SquareOption icon={<Gem className="h-6 w-6" />} label="Fundo de riqueza" sub="Em breve" disabled />
+        <section className="mt-5 grid grid-cols-4 gap-2">
+          <SquareOption icon={<Package className="h-4 w-4" />} label="Meus produtos" onClick={() => setView("produtos")} />
+          <SquareOption icon={<History className="h-4 w-4" />} label="Histórico" onClick={() => setView("historico")} />
+          <SquareOption icon={<KeyRound className="h-4 w-4" />} label="Trocar senha" onClick={() => setView("senha")} />
+          <SquareOption icon={<LinkIcon className="h-4 w-4" />} label="Vincular conta" onClick={() => setView("vincular")} />
+          <SquareOption icon={<Smartphone className="h-4 w-4" />} label="Aplicativo" sub="Em breve" disabled />
+          <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" sub="Em breve" disabled />
+          <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" sub="Em breve" disabled />
         </section>
 
         <button onClick={sair} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
@@ -296,19 +296,19 @@ function SquareOption({
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`relative flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center shadow-card transition ${
+      className={`relative flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border p-1.5 text-center shadow-card transition ${
         disabled
           ? "cursor-not-allowed border-border/60 bg-secondary/30 text-muted-foreground opacity-70"
           : "border-border bg-gradient-card hover:border-primary/40 hover:bg-primary/5"
       }`}
     >
-      <span className={`grid h-11 w-11 place-items-center rounded-xl ${disabled ? "bg-muted text-muted-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}>
+      <span className={`grid h-7 w-7 place-items-center rounded-lg ${disabled ? "bg-muted text-muted-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}>
         {icon}
       </span>
-      <span className="text-xs font-bold leading-tight">{label}</span>
+      <span className="text-[10px] font-bold leading-tight">{label}</span>
       {sub && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase">
-          <Lock className="h-2.5 w-2.5" />{sub}
+        <span className="inline-flex items-center gap-0.5 rounded-full bg-muted px-1 py-0.5 text-[8px] font-bold uppercase">
+          <Lock className="h-2 w-2" />{sub}
         </span>
       )}
     </button>
