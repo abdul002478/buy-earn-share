@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   LogOut, User as UserIcon, KeyRound, Mail, Phone, Calendar,
   Sparkles, PiggyBank, History, Package, Smartphone, Dice5, Gem, Camera, Lock,
-  TrendingUp, Clock, Link as LinkIcon,
+  TrendingUp, Clock, Link as LinkIcon, Headphones, MessageCircle, Send, Eye, EyeOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
@@ -22,6 +22,7 @@ function PerfilPage() {
   const user = useStore(() => currentUser());
   const navigate = useNavigate();
   const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular">("main");
+  const [suporteOpen, setSuporteOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [antiga, setAntiga] = useState("");
   const [nova, setNova] = useState("");
@@ -122,6 +123,7 @@ function PerfilPage() {
           <SquareOption icon={<History className="h-4 w-4" />} label="Histórico" onClick={() => setView("historico")} />
           <SquareOption icon={<KeyRound className="h-4 w-4" />} label="Trocar senha" onClick={() => setView("senha")} />
           <SquareOption icon={<LinkIcon className="h-4 w-4" />} label="Vincular conta" onClick={() => setView("vincular")} />
+          <SquareOption icon={<Headphones className="h-4 w-4" />} label="Linha do cliente" onClick={() => setSuporteOpen(true)} />
           <SquareOption icon={<Smartphone className="h-4 w-4" />} label="Aplicativo" sub="Em breve" disabled />
           <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" sub="Em breve" disabled />
           <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" sub="Em breve" disabled />
@@ -227,6 +229,61 @@ function PerfilPage() {
         )}
       </main>
       <SiteFooter />
+      {suporteOpen && (
+        <div
+          onClick={() => setSuporteOpen(false)}
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl border border-border bg-gradient-card p-5 shadow-card"
+          >
+            <h3 className="flex items-center gap-2 text-lg font-bold">
+              <Headphones className="h-5 w-5 text-primary" /> Linha do cliente
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">Fale conosco a qualquer momento.</p>
+            <div className="mt-4 grid gap-2">
+              <a
+                href="https://wa.me/258858601038"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3 text-sm font-bold hover:border-primary/40"
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-primary-foreground">
+                  <MessageCircle className="h-4 w-4" />
+                </span>
+                WhatsApp (atendimento)
+              </a>
+              <a
+                href="https://chat.whatsapp.com/LNoznGUnplRF9aVBlQrc3V?mode=gi_t"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-border bg-secondary p-3 text-sm font-bold hover:border-primary/40"
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-primary-foreground">
+                  <MessageCircle className="h-4 w-4" />
+                </span>
+                Grupo no WhatsApp
+              </a>
+              <button
+                disabled
+                className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 p-3 text-sm font-bold opacity-60"
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-lg bg-muted text-muted-foreground">
+                  <Send className="h-4 w-4" />
+                </span>
+                Telegram (em breve)
+              </button>
+            </div>
+            <button
+              onClick={() => setSuporteOpen(false)}
+              className="mt-4 w-full rounded-xl border border-border bg-secondary py-2 text-sm font-bold"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -316,11 +373,30 @@ function SquareOption({
 }
 
 function Field({ label, type = "text", value, onChange }: { label: string; type?: string; value: string; onChange: (v: string) => void }) {
+  const [show, setShow] = useState(false);
+  const isPassword = type === "password";
+  const inputType = isPassword ? (show ? "text" : "password") : type;
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-             className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30" />
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-input px-3 py-2.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
+        <input
+          type={inputType}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={show ? "Esconder senha" : "Mostrar senha"}
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
     </label>
   );
 }
