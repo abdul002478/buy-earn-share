@@ -163,6 +163,15 @@
   input, textarea, select {
     text-transform: none;
   }
+
+  /* Números aparecem em preto carregado e ligeiramente maiores */
+  .font-mono,
+  .tabular-nums {
+    color: #000;
+    font-weight: 900;
+    font-size: 1.05em;
+    letter-spacing: 0.02em;
+  }
 }
 
 @theme inline {
