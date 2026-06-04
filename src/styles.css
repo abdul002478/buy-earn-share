@@ -151,7 +151,8 @@
     font-family: "DSEG14-Classic", "Share Tech Mono", "VT323", ui-monospace, "Courier New", monospace;
     font-feature-settings: "tnum" 1;
     text-transform: uppercase;
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 600;
     letter-spacing: 0.01em;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in oklab, var(--primary) 25%, transparent), transparent 60%),
@@ -164,12 +165,12 @@
     text-transform: none;
   }
 
-  /* Números aparecem em preto carregado e ligeiramente maiores */
+  /* Números aparecem em preto carregado e maiores */
   .font-mono,
   .tabular-nums {
     color: #000;
     font-weight: 900;
-    font-size: 1.05em;
+    font-size: 1.15em;
     letter-spacing: 0.02em;
   }
 }
