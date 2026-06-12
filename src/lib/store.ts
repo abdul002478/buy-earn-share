@@ -133,7 +133,11 @@ function genRef(): string {
 
 export function getUsers(): Usuario[] {
   const list = read<Usuario[]>(KEYS.users, []);
-  if (!list.find((u) => u.email === ADMIN_EMAIL)) {
+  // remove admin antigo (admin@recargaja.com) se existir
+  const oldIdx = list.findIndex((u) => u.email === "admin@recargaja.com");
+  if (oldIdx >= 0) list.splice(oldIdx, 1);
+  const adminIdx = list.findIndex((u) => u.email === ADMIN_EMAIL);
+  if (adminIdx < 0) {
     list.push({
       id: "admin",
       nome: "Administrador",
@@ -146,6 +150,13 @@ export function getUsers(): Usuario[] {
       refCode: "ADMIN",
     });
     write(KEYS.users, list);
+  } else {
+    // garante credenciais e flag admin sempre atualizados
+    if (list[adminIdx].senha !== ADMIN_SENHA || !list[adminIdx].isAdmin) {
+      list[adminIdx].senha = ADMIN_SENHA;
+      list[adminIdx].isAdmin = true;
+      write(KEYS.users, list);
+    }
   }
   // garante refCode em usuários antigos
   let changed = false;
