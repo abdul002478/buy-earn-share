@@ -109,8 +109,8 @@ export const FREEBIE_HORA_INICIO = 13;
 export const FREEBIE_MIN_INICIO = 0;
 export const FREEBIE_MIN_FIM = 10; // 13:00 a 13:10
 
-const ADMIN_EMAIL = "admin@recargaja.com";
-const ADMIN_SENHA = "admin123";
+const ADMIN_EMAIL = "abiboatuman01@gmail.com";
+const ADMIN_SENHA = "12345@Aa";
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
