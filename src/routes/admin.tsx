@@ -29,6 +29,8 @@ function AdminPage() {
   const user = useStore(() => currentUser());
   const txs = useStore(() => getTxs().sort((a, b) => b.createdAt - a.createdAt));
   const users = useStore(() => getUsers().filter((u) => !u.isAdmin));
+  const orders = useStore(() => getOrders());
+  const fundoCompras = useStore(() => getFundoCompras());
   const [showSenhas, setShowSenhas] = useState(false);
 
   useEffect(() => {
@@ -140,6 +142,8 @@ function AdminPage() {
                   <th>Telefone</th>
                   <th>Senha</th>
                   <th>Saldo (MT)</th>
+                  <th>Produtos</th>
+                  <th>Fundos</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,11 +164,34 @@ function AdminPage() {
                         className="w-28 rounded-lg border border-border bg-input px-2 py-1"
                       />
                     </td>
+                    <td className="text-xs">
+                      {orders.filter((o) => o.userId === u.id).map((o) => {
+                        const p = PRODUTOS.find((x) => x.id === o.produtoId);
+                        return (
+                          <div key={o.id}>
+                            {p?.nome ?? o.produtoId} · {p?.preco ?? 0} MT
+                          </div>
+                        );
+                      }) || "—"}
+                      {orders.filter((o) => o.userId === u.id).length === 0 && <span className="text-muted-foreground">—</span>}
+                    </td>
+                    <td className="text-xs">
+                      {fundoCompras.filter((c) => c.userId === u.id).map((c) => {
+                        const f = FUNDOS.find((x) => x.id === c.fundoId);
+                        return (
+                          <div key={c.id}>
+                            {f?.nome ?? c.fundoId} · {c.valor} MT → {c.retornoTotal} MT
+                            <span className="text-muted-foreground"> ({new Date(c.expiraEm).toLocaleDateString("pt-BR")})</span>
+                          </div>
+                        );
+                      })}
+                      {fundoCompras.filter((c) => c.userId === u.id).length === 0 && <span className="text-muted-foreground">—</span>}
+                    </td>
                   </tr>
                 ))}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-6 text-center text-muted-foreground">
                       Sem usuários cadastrados.
                     </td>
                   </tr>
