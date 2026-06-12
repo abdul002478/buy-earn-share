@@ -64,32 +64,32 @@
 
 :root {
   --radius: 0.875rem;
-  /* Tema neutro: cinzas, azul-petróleo, sem amarelo */
-  --background: oklch(0.92 0.03 240);
+  /* Tema: branco, preto e azul */
+  --background: oklch(1 0 0);
   --foreground: oklch(0.05 0 0);
-  --card: oklch(0.99 0.003 240);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.05 0 0);
-  --popover: oklch(0.99 0.003 240);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.05 0 0);
-  --primary: oklch(0.32 0.04 240);
-  --primary-foreground: oklch(0.98 0.003 240);
-  --primary-glow: oklch(0.45 0.06 235);
-  --accent: oklch(0.55 0.12 230);
-  --accent-foreground: oklch(0.98 0.003 240);
-  --secondary: oklch(0.92 0.005 240);
+  --primary: oklch(0.45 0.22 260);
+  --primary-foreground: oklch(1 0 0);
+  --primary-glow: oklch(0.6 0.2 255);
+  --accent: oklch(0.55 0.24 260);
+  --accent-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0.01 250);
   --secondary-foreground: oklch(0.05 0 0);
-  --muted: oklch(0.9 0.005 240);
-  --muted-foreground: oklch(0.35 0.01 240);
-  --destructive: oklch(0.5 0.22 28);
-  --destructive-foreground: oklch(0.98 0.005 240);
-  --border: oklch(0.82 0.008 240);
-  --input: oklch(0.97 0.004 240);
-  --ring: oklch(0.45 0.06 235);
-  --gradient-primary: linear-gradient(135deg, oklch(0.28 0.04 240), oklch(0.45 0.06 235));
-  --gradient-fire: linear-gradient(135deg, oklch(0.35 0.05 240), oklch(0.5 0.1 230), oklch(0.6 0.12 220));
-  --gradient-card: linear-gradient(160deg, oklch(0.99 0.003 240), oklch(0.94 0.005 240));
+  --muted: oklch(0.95 0.005 250);
+  --muted-foreground: oklch(0.35 0.02 250);
+  --destructive: oklch(0.55 0.22 28);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.85 0.01 250);
+  --input: oklch(0.98 0.005 250);
+  --ring: oklch(0.45 0.22 260);
+  --gradient-primary: linear-gradient(135deg, oklch(0.35 0.2 265), oklch(0.55 0.22 255));
+  --gradient-fire: linear-gradient(135deg, oklch(0.15 0.05 260), oklch(0.4 0.22 260), oklch(0.6 0.2 250));
+  --gradient-card: linear-gradient(160deg, oklch(1 0 0), oklch(0.97 0.01 250));
   --shadow-glow: 0 20px 60px -15px color-mix(in oklab, var(--primary) 55%, transparent);
-  --shadow-card: 0 10px 30px -12px oklch(0.2 0.02 240 / 0.25);
+  --shadow-card: 0 10px 30px -12px oklch(0.1 0.05 260 / 0.25);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
