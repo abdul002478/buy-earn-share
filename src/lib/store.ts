@@ -225,6 +225,8 @@ export function comprarFundo(fundoId: string, valor: number): string | null {
   resto -= usaRec;
   users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - resto;
   users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+  const isPrimeira = !users[idx].fezPrimeiraCompra;
+  if (isPrimeira) users[idx].fezPrimeiraCompra = true;
   saveUsers(users);
 
   const rendimentoTotal = valor * (f.rendimentoDiarioPct / 100) * f.duracaoDias;
@@ -241,6 +243,30 @@ export function comprarFundo(fundoId: string, valor: number): string | null {
     creditado: false,
   });
   saveFundoCompras(list);
+
+  // Bônus de indicação 25/5/1% na PRIMEIRA compra do convidado
+  if (isPrimeira) {
+    const percent = [0.25, 0.05, 0.01];
+    const txs = getTxs();
+    let atualRef = users[idx].referredBy;
+    for (let nivel = 0; nivel < percent.length && atualRef; nivel++) {
+      const refIdx = users.findIndex((x) => x.refCode === atualRef);
+      if (refIdx < 0) break;
+      const bonus = Math.floor(valor * percent[nivel]);
+      if (bonus > 0) {
+        users[refIdx].saldoProduzido = (users[refIdx].saldoProduzido ?? 0) + bonus;
+        users[refIdx].saldo = (users[refIdx].saldoRecarga ?? 0) + (users[refIdx].saldoProduzido ?? 0);
+        txs.push({
+          id: "t_" + Math.random().toString(36).slice(2, 10),
+          userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
+          status: "aprovado", createdAt: Date.now(),
+        });
+      }
+      atualRef = users[refIdx].referredBy;
+    }
+    saveUsers(users);
+    saveTxs(txs);
+  }
   return null;
 }
 
