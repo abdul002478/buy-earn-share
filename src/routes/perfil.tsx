@@ -423,3 +423,131 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
     </div>
   );
 }
+
+function FundosView({
+  onBack, onHist, userId,
+}: { onBack: () => void; onHist: () => void; userId: string }) {
+  const [valores, setValores] = useState<Record<string, string>>({});
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const user = useStore(() => currentUser());
+  void userId;
+  const saldoDisp = Math.floor((user?.saldoRecarga ?? 0) + (user?.saldoProduzido ?? 0));
+
+  const comprar = (id: string) => {
+    const v = parseFloat(valores[id] || "0");
+    const err = comprarFundo(id, v);
+    if (err) setMsg({ ok: false, text: err });
+    else {
+      setMsg({ ok: true, text: "Fundo comprado com sucesso!" });
+      setValores((s) => ({ ...s, [id]: "" }));
+    }
+  };
+
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <div className="mb-3 flex items-center justify-between">
+        <button onClick={onBack} className="text-xs font-semibold text-muted-foreground">← Voltar</button>
+        <button
+          onClick={onHist}
+          aria-label="Histórico de fundos"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-secondary hover:border-primary/40"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </div>
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <Gem className="h-5 w-5 text-primary" /> Fundos de Riqueza
+      </h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Saldo disponível: <span className="font-bold text-primary">{saldoDisp} MT</span> (recarga + rendimento)
+      </p>
+      {msg && (
+        <p className={`mt-2 text-sm ${msg.ok ? "text-primary" : "text-destructive"}`}>{msg.text}</p>
+      )}
+      <div className="mt-4 grid gap-3">
+        {FUNDOS.map((f) => {
+          const v = parseFloat(valores[f.id] || "0");
+          const retorno = v > 0 ? Math.floor(v + v * (f.rendimentoDiarioPct / 100) * f.duracaoDias) : 0;
+          return (
+            <div key={f.id} className="rounded-xl border border-border bg-secondary/40 p-4">
+              <div className="flex items-center justify-between">
+                <p className="font-bold">{f.nome}</p>
+                <span className="rounded-md bg-gradient-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                  {f.rendimentoDiarioPct.toFixed(2)}% / dia
+                </span>
+              </div>
+              <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                <span>Duração: <b className="text-foreground">{f.duracaoDias} dia(s)</b></span>
+                <span>Mín.: <b className="text-foreground">{f.minCompra} MT</b></span>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={`A partir de ${f.minCompra}`}
+                  value={valores[f.id] || ""}
+                  onChange={(e) => setValores((s) => ({ ...s, [f.id]: e.target.value }))}
+                  className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+                <button
+                  onClick={() => comprar(f.id)}
+                  className="rounded-lg bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
+                >
+                  Comprar
+                </button>
+              </div>
+              {retorno > 0 && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Retorno no fim: <b className="text-primary">{retorno} MT</b>
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        O valor total será creditado apenas ao terminar o período do fundo.
+      </p>
+    </section>
+  );
+}
+
+function FundosHistView({ onBack, userId }: { onBack: () => void; userId: string }) {
+  useStore(() => currentUser());
+  const compras = getFundoCompras()
+    .filter((c) => c.userId === userId)
+    .sort((a, b) => b.compradoEm - a.compradoEm);
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <button onClick={onBack} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <History className="h-5 w-5 text-primary" /> Histórico de fundos
+      </h2>
+      {compras.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">Nenhuma compra de fundo ainda.</p>
+      ) : (
+        <ul className="mt-3 grid gap-3">
+          {compras.map((c) => {
+            const f = FUNDOS.find((x) => x.id === c.fundoId);
+            return (
+              <li key={c.id} className="rounded-xl border border-border bg-secondary/40 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <p className="font-bold">{f?.nome ?? c.fundoId}</p>
+                  <span className={`text-[10px] font-bold uppercase ${c.creditado ? "text-primary" : "text-muted-foreground"}`}>
+                    {c.creditado ? "Creditado" : "Em curso"}
+                  </span>
+                </div>
+                <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                  <span>Comprado: <b className="text-foreground">{new Date(c.compradoEm).toLocaleDateString("pt-BR")}</b></span>
+                  <span>Termina: <b className="text-foreground">{new Date(c.expiraEm).toLocaleDateString("pt-BR")}</b></span>
+                  <span>Valor: <b className="text-foreground">{c.valor} MT</b></span>
+                  <span>Receberá: <b className="text-primary">{c.retornoTotal} MT</b></span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
