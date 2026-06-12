@@ -9,6 +9,10 @@ import {
   getUsers,
   logout,
   useStore,
+  getOrders,
+  getFundoCompras,
+  PRODUTOS,
+  FUNDOS,
 } from "@/lib/store";
 import { useEffect, useState } from "react";
 import { Check, X, ShieldCheck, LogOut, Eye, EyeOff } from "lucide-react";
