@@ -4,12 +4,14 @@ import {
   currentUser, logout, trocarSenha, useStore,
   getOrders, getTxs, PRODUTOS, creditarRendimentos,
   getVipNivel, salvarFotoPerfil, calcularRendimento, vincularConta,
+  FUNDOS, comprarFundo, creditarFundos, getFundoCompras,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
   LogOut, User as UserIcon, KeyRound, Mail, Phone, Calendar,
   Sparkles, PiggyBank, History, Package, Smartphone, Dice5, Gem, Camera, Lock,
   TrendingUp, Clock, Link as LinkIcon, Headphones, MessageCircle, Send, Eye, EyeOff,
+  MoreVertical,
 } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
@@ -18,10 +20,10 @@ export const Route = createFileRoute("/perfil")({
 });
 
 function PerfilPage() {
-  useEffect(() => { creditarRendimentos(); }, []);
+  useEffect(() => { creditarRendimentos(); creditarFundos(); }, []);
   const user = useStore(() => currentUser());
   const navigate = useNavigate();
-  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular">("main");
+  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular" | "fundos" | "fundosHist">("main");
   const [suporteOpen, setSuporteOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [antiga, setAntiga] = useState("");
@@ -126,7 +128,7 @@ function PerfilPage() {
           <SquareOption icon={<Headphones className="h-4 w-4" />} label="Linha do cliente" onClick={() => setSuporteOpen(true)} />
           <SquareOption icon={<Smartphone className="h-4 w-4" />} label="Aplicativo" sub="Em breve" disabled />
           <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" sub="Em breve" disabled />
-          <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" sub="Em breve" disabled />
+          <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" onClick={() => setView("fundos")} />
         </section>
 
         <button onClick={sair} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-bold text-destructive">
@@ -226,6 +228,18 @@ function PerfilPage() {
 
         {view === "vincular" && (
           <VincularContaView onBack={() => setView("main")} user={user} />
+        )}
+
+        {view === "fundos" && (
+          <FundosView
+            onBack={() => setView("main")}
+            onHist={() => setView("fundosHist")}
+            userId={user.id}
+          />
+        )}
+
+        {view === "fundosHist" && (
+          <FundosHistView onBack={() => setView("fundos")} userId={user.id} />
         )}
       </main>
       <SiteFooter />
