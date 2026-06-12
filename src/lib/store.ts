@@ -76,6 +76,7 @@ const KEYS = {
   orders: "rj.orders",
   session: "rj.session",
   freebies: "rj.freebies",
+  fundos: "rj.fundoOrders",
 };
 
 // VIP 1 a VIP 10 — 2 por linha, vão até VIP 10
@@ -169,6 +170,97 @@ export function getOrders(): CompraProduto[] { return read<CompraProduto[]>(KEYS
 export function saveOrders(list: CompraProduto[]) { write(KEYS.orders, list); }
 export function getFreebies(): FreebieClaim[] { return read<FreebieClaim[]>(KEYS.freebies, []); }
 export function saveFreebies(list: FreebieClaim[]) { write(KEYS.freebies, list); }
+
+// ====== FUNDOS DE RIQUEZA ======
+export interface Fundo {
+  id: string;
+  nome: string;
+  duracaoDias: number;
+  minCompra: number;
+  rendimentoDiarioPct: number; // ex.: 1.9 = 1,90% ao dia
+}
+
+export const FUNDOS: Fundo[] = [
+  { id: "f1", nome: "Início",    duracaoDias: 1,   minCompra: 100, rendimentoDiarioPct: 1.90 },
+  { id: "f2", nome: "Consta",    duracaoDias: 3,   minCompra: 100, rendimentoDiarioPct: 1.92 },
+  { id: "f3", nome: "Crescer",   duracaoDias: 15,  minCompra: 100, rendimentoDiarioPct: 1.80 },
+  { id: "f4", nome: "Prosperar", duracaoDias: 30,  minCompra: 100, rendimentoDiarioPct: 1.50 },
+  { id: "f5", nome: "Fortuna",   duracaoDias: 365, minCompra: 100, rendimentoDiarioPct: 2.00 },
+];
+
+export interface FundoCompra {
+  id: string;
+  userId: string;
+  fundoId: string;
+  valor: number;
+  compradoEm: number;
+  expiraEm: number;
+  retornoTotal: number; // valor + rendimento total
+  creditado: boolean;
+}
+
+export function getFundoCompras(): FundoCompra[] {
+  return read<FundoCompra[]>(KEYS.fundos, []);
+}
+export function saveFundoCompras(list: FundoCompra[]) {
+  write(KEYS.fundos, list);
+}
+
+export function comprarFundo(fundoId: string, valor: number): string | null {
+  const u = currentUser();
+  if (!u) return "Não autenticado";
+  const f = FUNDOS.find((x) => x.id === fundoId);
+  if (!f) return "Fundo não existe";
+  if (!Number.isFinite(valor) || valor <= 0) return "Valor inválido";
+  if (valor < f.minCompra) return `Mínimo ${f.minCompra} MT`;
+  const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
+  if (total < valor) return "Saldo insuficiente.";
+  const users = getUsers();
+  const idx = users.findIndex((x) => x.id === u.id);
+  // debita recarga primeiro, depois produzido
+  let resto = valor;
+  const rec = users[idx].saldoRecarga ?? 0;
+  const usaRec = Math.min(rec, resto);
+  users[idx].saldoRecarga = rec - usaRec;
+  resto -= usaRec;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) - resto;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+  saveUsers(users);
+
+  const rendimentoTotal = valor * (f.rendimentoDiarioPct / 100) * f.duracaoDias;
+  const retornoTotal = Math.floor(valor + rendimentoTotal);
+  const list = getFundoCompras();
+  list.push({
+    id: "fo_" + Math.random().toString(36).slice(2, 10),
+    userId: u.id,
+    fundoId: f.id,
+    valor,
+    compradoEm: Date.now(),
+    expiraEm: Date.now() + f.duracaoDias * 86400000,
+    retornoTotal,
+    creditado: false,
+  });
+  saveFundoCompras(list);
+  return null;
+}
+
+export function creditarFundos() {
+  const list = getFundoCompras();
+  const users = getUsers();
+  const agora = Date.now();
+  let mudou = false;
+  for (const c of list) {
+    if (c.creditado) continue;
+    if (c.expiraEm > agora) continue;
+    const idx = users.findIndex((u) => u.id === c.userId);
+    if (idx < 0) continue;
+    users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + c.retornoTotal;
+    users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+    c.creditado = true;
+    mudou = true;
+  }
+  if (mudou) { saveFundoCompras(list); saveUsers(users); }
+}
 
 export function currentUserId(): string | null {
   return read<string | null>(KEYS.session, null);
