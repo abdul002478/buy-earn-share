@@ -5,6 +5,7 @@ import {
   getOrders, getTxs, PRODUTOS, creditarRendimentos,
   getVipNivel, salvarFotoPerfil, calcularRendimento, vincularConta,
   FUNDOS, comprarFundo, creditarFundos, getFundoCompras,
+  getVipNiveis,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -34,6 +35,7 @@ function PerfilPage() {
   useEffect(() => { if (!user) navigate({ to: "/login" }); }, [user, navigate]);
   if (!user) return null;
   const vip = getVipNivel(user.id);
+  const vipNiveis = getVipNiveis(user.id);
 
   const onPickFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -83,7 +85,9 @@ function PerfilPage() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFoto} />
             <div>
               <h1 className="flex items-center gap-2 text-xl font-extrabold">
-                <span className="rounded-md bg-gradient-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">VIP {vip}</span>
+                <span className="rounded-md bg-gradient-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                  {vipNiveis.length > 0 ? `VIP ${vipNiveis.join(",")}` : `VIP ${vip}`}
+                </span>
                 {user.nome}
               </h1>
               <p className="text-xs text-muted-foreground">Código: <span className="font-mono">{user.refCode}</span></p>
