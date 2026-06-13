@@ -542,8 +542,8 @@ function FundosHistView({ onBack, userId }: { onBack: () => void; userId: string
                   </span>
                 </div>
                 <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                  <span>Comprado: <b className="text-foreground">{new Date(c.compradoEm).toLocaleDateString("pt-BR")}</b></span>
-                  <span>Termina: <b className="text-foreground">{new Date(c.expiraEm).toLocaleDateString("pt-BR")}</b></span>
+                  <span>Comprado: <b className="text-foreground">{new Date(c.compradoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</b></span>
+                  <span>Termina: <b className="text-foreground">{new Date(c.expiraEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</b></span>
                   <span>Valor: <b className="text-foreground">{c.valor} MT</b></span>
                   <span>Receberá: <b className="text-primary">{c.retornoTotal} MT</b></span>
                 </div>
