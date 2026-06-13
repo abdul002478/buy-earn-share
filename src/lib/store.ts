@@ -567,18 +567,20 @@ export function creditarRendimentos() {
   for (const o of orders) {
     const p = PRODUTOS.find((x) => x.id === o.produtoId);
     if (!p) continue;
-    const totalMs = p.duracaoDias * 86400000;
+    const DIA = 86400000;
+    const totalMs = p.duracaoDias * DIA;
     const fim = o.compradoEm + totalMs;
     const desde = o.ultimoCredito ?? o.compradoEm;
     const ate = Math.min(agora, fim);
-    if (ate <= desde) continue;
-    const ganho = (p.rendimentoTotal / totalMs) * (ate - desde);
-    if (ganho <= 0) continue;
+    // credita apenas dias completos decorridos desde o último crédito
+    const dias = Math.floor((ate - desde) / DIA);
+    if (dias <= 0) continue;
+    const ganho = p.rendimentoDiario * dias;
     const idx = users.findIndex((u) => u.id === o.userId);
     if (idx < 0) continue;
     users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + ganho;
     users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
-    o.ultimoCredito = ate;
+    o.ultimoCredito = desde + dias * DIA;
     mudouOrders = true;
     mudouUsers = true;
   }
@@ -592,22 +594,19 @@ export function calcularRendimento(userId: string) {
   let futuro = 0; // ainda vai render
   let hoje = 0;
   const agora = Date.now();
-  const inicioHoje = new Date(); inicioHoje.setHours(0,0,0,0);
   for (const o of orders) {
     const p = PRODUTOS.find((x) => x.id === o.produtoId);
     if (!p) continue;
-    const totalMs = p.duracaoDias * 86400000;
-    const decorridoMs = Math.max(0, Math.min(agora - o.compradoEm, totalMs));
-    const fracTotal = decorridoMs / totalMs;
-    const rendido = p.rendimentoTotal * fracTotal;
+    const DIA = 86400000;
+    const diasDecorridos = Math.min(
+      p.duracaoDias,
+      Math.max(0, Math.floor((agora - o.compradoEm) / DIA))
+    );
+    const rendido = p.rendimentoDiario * diasDecorridos;
     total += rendido;
     futuro += p.rendimentoTotal - rendido;
-    // hoje
-    const inicioCalc = Math.max(o.compradoEm, inicioHoje.getTime());
-    const fimCalc = Math.min(agora, o.compradoEm + totalMs);
-    if (fimCalc > inicioCalc) {
-      hoje += (p.rendimentoTotal / totalMs) * (fimCalc - inicioCalc);
-    }
+    // "hoje" = rendimento do ciclo de 24h atual, creditado ao completar
+    if (diasDecorridos < p.duracaoDias) hoje += p.rendimentoDiario;
   }
   return { total: Math.floor(total), futuro: Math.floor(futuro), hoje: Math.floor(hoje) };
 }
@@ -661,6 +660,16 @@ export function getVipNivel(userId: string): number {
     if (p?.vip && p.vip > max) max = p.vip;
   }
   return max;
+}
+
+export function getVipNiveis(userId: string): number[] {
+  const orders = getOrders().filter((o) => o.userId === userId);
+  const set = new Set<number>();
+  for (const o of orders) {
+    const p = PRODUTOS.find((x) => x.id === o.produtoId);
+    if (p?.vip) set.add(p.vip);
+  }
+  return Array.from(set).sort((a, b) => a - b);
 }
 export function salvarFotoPerfil(dataUrl: string) {
   const u = currentUser();
