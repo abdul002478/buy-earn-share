@@ -31,7 +31,11 @@ function CadastroPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/cadastro" });
   const user = useStore(() => currentUser());
-  const [form, setForm] = useState({ nome: "", email: "", telefone: "", senha: "", confirmar: "", aceite: false });
+  const [form, setForm] = useState({ nome: "", email: "", telefone: "", senha: "", confirmar: "", convite: "", aceite: false });
+
+  useEffect(() => {
+    if (search.ref) setForm((f) => ({ ...f, convite: search.ref as string }));
+  }, [search.ref]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
 
@@ -55,7 +59,7 @@ function CadastroPage() {
     setErrors({});
     const result = register({
       nome: form.nome, email: form.email, telefone: "+258 " + form.telefone,
-      senha: form.senha, ref: search.ref,
+      senha: form.senha, ref: (form.convite || search.ref || "").trim() || undefined,
     });
     if (typeof result === "string") { setErrors({ email: result }); return; }
     setDone(true);
@@ -106,6 +110,14 @@ function CadastroPage() {
               </div>
               <AuthField icon={<Lock className="h-4 w-4" />} label="Senha" type="password" value={form.senha} onChange={(v) => set("senha", v)} placeholder="Mínimo 8 caracteres" error={errors.senha} autoComplete="new-password" />
               <AuthField icon={<Lock className="h-4 w-4" />} label="Confirmar senha" type="password" value={form.confirmar} onChange={(v) => set("confirmar", v)} placeholder="Repita a senha" error={errors.confirmar} autoComplete="new-password" />
+
+              <AuthField
+                icon={<Gift className="h-4 w-4" />}
+                label="Código de convite (opcional)"
+                value={form.convite}
+                onChange={(v) => set("convite", v.toUpperCase())}
+                placeholder="Ex.: ABC123"
+              />
 
               <label className="flex items-start gap-2 text-xs text-muted-foreground">
                 <input type="checkbox" checked={form.aceite} onChange={(e) => set("aceite", e.target.checked)} className="mt-0.5 h-3.5 w-3.5 accent-[var(--primary)]" />
