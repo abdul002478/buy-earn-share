@@ -661,6 +661,16 @@ export function getVipNivel(userId: string): number {
   }
   return max;
 }
+
+export function getVipNiveis(userId: string): number[] {
+  const orders = getOrders().filter((o) => o.userId === userId);
+  const set = new Set<number>();
+  for (const o of orders) {
+    const p = PRODUTOS.find((x) => x.id === o.produtoId);
+    if (p?.vip) set.add(p.vip);
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
 export function salvarFotoPerfil(dataUrl: string) {
   const u = currentUser();
   if (!u) return;
