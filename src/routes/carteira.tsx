@@ -10,12 +10,14 @@ import {
   pedirDeposito,
   pedirLevantamento,
   useStore,
+  getTxs,
 } from "@/lib/store";
 import { useEffect, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Copy,
+  MoreVertical,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -70,9 +72,10 @@ function CarteiraPage() {
         </nav>
 
         <section className="mt-6 rounded-2xl border border-border bg-gradient-card p-6 shadow-card">
-          {aba === "deposito" && <Deposito />}
+          {aba === "deposito" && <Deposito userId={user.id} />}
           {aba === "levantamento" && (
             <Levantamento
+              userId={user.id}
               saldo={Math.floor(user.saldoProduzido ?? 0)}
               vinc={
                 user.contaVincNumero && user.contaVincMetodo
