@@ -6,6 +6,7 @@ import {
   getVipNivel, salvarFotoPerfil, calcularRendimento, vincularConta,
   FUNDOS, comprarFundo, creditarFundos, getFundoCompras,
   getVipNiveis,
+  girarRoleta, getRoletaSpins, ROLETA_SEGMENTOS,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -24,7 +25,7 @@ function PerfilPage() {
   useEffect(() => { creditarRendimentos(); creditarFundos(); }, []);
   const user = useStore(() => currentUser());
   const navigate = useNavigate();
-  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular" | "fundos" | "fundosHist">("main");
+  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular" | "fundos" | "fundosHist" | "roleta" | "roletaHist">("main");
   const [suporteOpen, setSuporteOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [antiga, setAntiga] = useState("");
@@ -131,7 +132,7 @@ function PerfilPage() {
           <SquareOption icon={<LinkIcon className="h-4 w-4" />} label="Vincular conta" onClick={() => setView("vincular")} />
           <SquareOption icon={<Headphones className="h-4 w-4" />} label="Linha do cliente" onClick={() => setSuporteOpen(true)} />
           <SquareOption icon={<Smartphone className="h-4 w-4" />} label="Aplicativo" sub="Em breve" disabled />
-          <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" sub="Em breve" disabled />
+          <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" onClick={() => setView("roleta")} />
           <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" onClick={() => setView("fundos")} />
         </section>
 
