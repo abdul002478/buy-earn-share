@@ -169,6 +169,7 @@ export function getUsers(): Usuario[] {
       u.saldoProduzido = 0;
       changed = true;
     }
+    if (u.chancesRoleta === undefined) { u.chancesRoleta = 0; changed = true; }
     // mantém saldo total = recarga + produzido
     const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
     if (u.saldo !== total) { u.saldo = total; changed = true; }
@@ -274,6 +275,9 @@ export function comprarFundo(fundoId: string, valor: number): string | null {
           userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
           status: "aprovado", createdAt: Date.now(),
         });
+      }
+      if (nivel === 0) {
+        users[refIdx].chancesRoleta = (users[refIdx].chancesRoleta ?? 0) + 1;
       }
       atualRef = users[refIdx].referredBy;
     }
@@ -463,6 +467,9 @@ export function comprarProduto(produtoId: string): string | null {
           userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
           status: "aprovado", createdAt: Date.now(),
         });
+      }
+      if (nivel === 0) {
+        users[refIdx].chancesRoleta = (users[refIdx].chancesRoleta ?? 0) + 1;
       }
       atualRef = users[refIdx].referredBy;
     }
