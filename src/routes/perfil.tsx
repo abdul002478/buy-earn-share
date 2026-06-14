@@ -191,44 +191,7 @@ function PerfilPage() {
         )}
 
         {view === "produtos" && (
-          <section className="rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
-            <button onClick={() => setView("main")} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
-            <h2 className="text-lg font-bold">Meus produtos</h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <Stat icon={<TrendingUp className="h-4 w-4" />} label="Renda total" value={`${rendimento.total} MT`} />
-              <Stat icon={<Sparkles className="h-4 w-4" />} label="A render" value={`${rendimento.futuro} MT`} />
-              <Stat icon={<Clock className="h-4 w-4" />} label="Renda hoje" value={`${rendimento.hoje} MT`} />
-            </div>
-            {orders.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Nenhum produto comprado.{" "}
-                <Link to="/produtos" className="font-semibold text-primary hover:underline">Ver planos</Link>
-              </p>
-            ) : (
-              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                {orders.map((o) => {
-                  const p = PRODUTOS.find((x) => x.id === o.produtoId);
-                  if (!p) return null;
-                  const ativo = o.expiraEm > Date.now();
-                  return (
-                    <li key={o.id} className="rounded-xl border border-border bg-secondary p-4">
-                      <p className="font-bold">{p.nome}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Comprado em {new Date(o.compradoEm).toLocaleDateString("pt-BR")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        Rendimento/dia: <span className="font-bold text-primary">{p.rendimentoDiario} MT</span>
-                      </p>
-                      <p className="text-xs">
-                        Total: <span className="font-bold">{p.rendimentoTotal} MT</span>
-                      </p>
-                      <p className="mt-1 text-[11px] font-bold uppercase">{ativo ? "Ativo" : "Encerrado"}</p>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
+          <ProdutosView onBack={() => setView("main")} orders={orders} rendimento={rendimento} />
         )}
 
         {view === "vincular" && (
@@ -245,6 +208,14 @@ function PerfilPage() {
 
         {view === "fundosHist" && (
           <FundosHistView onBack={() => setView("fundos")} userId={user.id} />
+        )}
+
+        {view === "roleta" && (
+          <RoletaView onBack={() => setView("main")} onHist={() => setView("roletaHist")} userId={user.id} />
+        )}
+
+        {view === "roletaHist" && (
+          <RoletaHistView onBack={() => setView("roleta")} userId={user.id} />
         )}
       </main>
       <SiteFooter />
