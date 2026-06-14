@@ -91,7 +91,8 @@ function CarteiraPage() {
   );
 }
 
-function Deposito() {
+function Deposito({ userId }: { userId: string }) {
+  const [showHist, setShowHist] = useState(false);
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState<"e-mola" | "mpesa">("e-mola");
   const [numero, setNumero] = useState("");
@@ -101,9 +102,22 @@ function Deposito() {
 
   const info = metodo === "e-mola" ? DEPOSITO_INFO.emola : DEPOSITO_INFO.mpesa;
 
+  if (showHist) {
+    return <HistoricoView tipo="deposito" titulo="Histórico de recargas" onBack={() => setShowHist(false)} userId={userId} />;
+  }
+
   return (
     <div>
-      <h2 className="text-xl font-bold">Recarregar</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Recarregar</h2>
+        <button
+          onClick={() => setShowHist(true)}
+          aria-label="Histórico de recargas"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-secondary hover:border-primary/40"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </div>
       <p className="mt-1 text-sm text-muted-foreground">
         Mínimo {DEPOSITO_MINIMO} MT. Envie o valor para o número abaixo e cole a mensagem
         de confirmação.
@@ -206,11 +220,13 @@ function Deposito() {
 }
 
 function Levantamento({
-  saldo, vinc,
+  saldo, vinc, userId,
 }: {
   saldo: number;
   vinc: { metodo: "e-mola" | "mpesa"; numero: string; nome: string } | null;
+  userId: string;
 }) {
+  const [showHist, setShowHist] = useState(false);
   const [valor, setValor] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const v = Number(valor) || 0;
@@ -218,9 +234,22 @@ function Levantamento({
   const liquido = Math.max(0, v - taxa);
   const janela = janelaSaqueAberta();
 
+  if (showHist) {
+    return <HistoricoView tipo="levantamento" titulo="Histórico de saques" onBack={() => setShowHist(false)} userId={userId} />;
+  }
+
   return (
     <div>
-      <h2 className="text-xl font-bold">Saquê</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Saquê</h2>
+        <button
+          onClick={() => setShowHist(true)}
+          aria-label="Histórico de saques"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-secondary hover:border-primary/40"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </div>
       <p className="mt-1 text-sm text-muted-foreground">
         Taxa de <strong>10%</strong>. Processamento até 5h.
         Horário: <strong>09:30 às 18:30</strong>.
@@ -308,5 +337,43 @@ function Field({
         className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
       />
     </label>
+  );
+}
+
+function HistoricoView({
+  tipo, titulo, onBack, userId,
+}: { tipo: "deposito" | "levantamento"; titulo: string; onBack: () => void; userId: string }) {
+  useStore(() => currentUser());
+  const lista = getTxs()
+    .filter((t) => t.userId === userId && t.tipo === tipo)
+    .sort((a, b) => b.createdAt - a.createdAt);
+  return (
+    <div>
+      <button onClick={onBack} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
+      <h2 className="text-xl font-bold">{titulo}</h2>
+      {lista.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">Nenhum registro ainda.</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-border">
+          {lista.map((t) => (
+            <li key={t.id} className="flex items-center justify-between py-3 text-sm">
+              <div>
+                <p className="font-semibold capitalize">{t.tipo}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(t.createdAt).toLocaleString("pt-BR")}{t.metodo ? ` · ${t.metodo}` : ""}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold">{t.valor} MT</p>
+                <span className={`text-[10px] font-bold uppercase ${
+                  t.status === "aprovado" ? "text-primary" :
+                  t.status === "negado" ? "text-destructive" : "text-yellow-500"
+                }`}>{t.status}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
