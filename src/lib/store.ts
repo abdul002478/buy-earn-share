@@ -61,6 +61,7 @@ export interface Usuario {
   contaVincMetodo?: "e-mola" | "mpesa";
   contaVincNumero?: string;
   contaVincNome?: string;
+  chancesRoleta?: number;
 }
 
 export interface FreebieClaim {
@@ -78,6 +79,7 @@ const KEYS = {
   freebies: "rj.freebies",
   fundos: "rj.fundoOrders",
 };
+const ROLETA_KEY = "rj.roletaSpins";
 
 // VIP 1 a VIP 10 — 2 por linha, vão até VIP 10
 export const PRODUTOS: Produto[] = [
