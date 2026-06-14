@@ -6,6 +6,7 @@ import {
   getVipNivel, salvarFotoPerfil, calcularRendimento, vincularConta,
   FUNDOS, comprarFundo, creditarFundos, getFundoCompras,
   getVipNiveis,
+  girarRoleta, getRoletaSpins, ROLETA_SEGMENTOS,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -24,7 +25,7 @@ function PerfilPage() {
   useEffect(() => { creditarRendimentos(); creditarFundos(); }, []);
   const user = useStore(() => currentUser());
   const navigate = useNavigate();
-  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular" | "fundos" | "fundosHist">("main");
+  const [view, setView] = useState<"main" | "senha" | "historico" | "produtos" | "vincular" | "fundos" | "fundosHist" | "roleta" | "roletaHist">("main");
   const [suporteOpen, setSuporteOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [antiga, setAntiga] = useState("");
@@ -131,7 +132,7 @@ function PerfilPage() {
           <SquareOption icon={<LinkIcon className="h-4 w-4" />} label="Vincular conta" onClick={() => setView("vincular")} />
           <SquareOption icon={<Headphones className="h-4 w-4" />} label="Linha do cliente" onClick={() => setSuporteOpen(true)} />
           <SquareOption icon={<Smartphone className="h-4 w-4" />} label="Aplicativo" sub="Em breve" disabled />
-          <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" sub="Em breve" disabled />
+          <SquareOption icon={<Dice5 className="h-4 w-4" />} label="Roleta" onClick={() => setView("roleta")} />
           <SquareOption icon={<Gem className="h-4 w-4" />} label="Fundo" onClick={() => setView("fundos")} />
         </section>
 
@@ -190,44 +191,7 @@ function PerfilPage() {
         )}
 
         {view === "produtos" && (
-          <section className="rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
-            <button onClick={() => setView("main")} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
-            <h2 className="text-lg font-bold">Meus produtos</h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <Stat icon={<TrendingUp className="h-4 w-4" />} label="Renda total" value={`${rendimento.total} MT`} />
-              <Stat icon={<Sparkles className="h-4 w-4" />} label="A render" value={`${rendimento.futuro} MT`} />
-              <Stat icon={<Clock className="h-4 w-4" />} label="Renda hoje" value={`${rendimento.hoje} MT`} />
-            </div>
-            {orders.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Nenhum produto comprado.{" "}
-                <Link to="/produtos" className="font-semibold text-primary hover:underline">Ver planos</Link>
-              </p>
-            ) : (
-              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                {orders.map((o) => {
-                  const p = PRODUTOS.find((x) => x.id === o.produtoId);
-                  if (!p) return null;
-                  const ativo = o.expiraEm > Date.now();
-                  return (
-                    <li key={o.id} className="rounded-xl border border-border bg-secondary p-4">
-                      <p className="font-bold">{p.nome}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Comprado em {new Date(o.compradoEm).toLocaleDateString("pt-BR")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        Rendimento/dia: <span className="font-bold text-primary">{p.rendimentoDiario} MT</span>
-                      </p>
-                      <p className="text-xs">
-                        Total: <span className="font-bold">{p.rendimentoTotal} MT</span>
-                      </p>
-                      <p className="mt-1 text-[11px] font-bold uppercase">{ativo ? "Ativo" : "Encerrado"}</p>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
+          <ProdutosView onBack={() => setView("main")} orders={orders} rendimento={rendimento} />
         )}
 
         {view === "vincular" && (
@@ -244,6 +208,14 @@ function PerfilPage() {
 
         {view === "fundosHist" && (
           <FundosHistView onBack={() => setView("fundos")} userId={user.id} />
+        )}
+
+        {view === "roleta" && (
+          <RoletaView onBack={() => setView("main")} onHist={() => setView("roletaHist")} userId={user.id} />
+        )}
+
+        {view === "roletaHist" && (
+          <RoletaHistView onBack={() => setView("roleta")} userId={user.id} />
         )}
       </main>
       <SiteFooter />
@@ -550,6 +522,228 @@ function FundosHistView({ onBack, userId }: { onBack: () => void; userId: string
               </li>
             );
           })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function ProdutosView({
+  onBack, orders, rendimento,
+}: {
+  onBack: () => void;
+  orders: ReturnType<typeof getOrders>;
+  rendimento: { total: number; futuro: number; hoje: number };
+}) {
+  const [soEncerrados, setSoEncerrados] = useState(false);
+  const agora = Date.now();
+  const filtrados = soEncerrados ? orders.filter((o) => o.expiraEm <= agora) : orders;
+  return (
+    <section className="rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <div className="mb-3 flex items-center justify-between">
+        <button onClick={onBack} className="text-xs font-semibold text-muted-foreground">← Voltar</button>
+        <button
+          onClick={() => setSoEncerrados((s) => !s)}
+          aria-label="Filtrar encerrados"
+          className={`grid h-8 w-8 place-items-center rounded-lg border ${soEncerrados ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary"} hover:border-primary/40`}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </div>
+      <h2 className="text-lg font-bold">
+        {soEncerrados ? "Produtos encerrados" : "Meus produtos"}
+      </h2>
+      {!soEncerrados && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Stat icon={<TrendingUp className="h-4 w-4" />} label="Renda total" value={`${rendimento.total} MT`} />
+          <Stat icon={<Sparkles className="h-4 w-4" />} label="A render" value={`${rendimento.futuro} MT`} />
+          <Stat icon={<Clock className="h-4 w-4" />} label="Renda hoje" value={`${rendimento.hoje} MT`} />
+        </div>
+      )}
+      {filtrados.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          {soEncerrados ? "Nenhum produto encerrado ainda." : (
+            <>Nenhum produto comprado. <Link to="/produtos" className="font-semibold text-primary hover:underline">Ver planos</Link></>
+          )}
+        </p>
+      ) : (
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {filtrados.map((o) => {
+            const p = PRODUTOS.find((x) => x.id === o.produtoId);
+            if (!p) return null;
+            const ativo = o.expiraEm > Date.now();
+            return (
+              <li key={o.id} className="rounded-xl border border-border bg-secondary p-4">
+                <p className="font-bold">{p.nome}</p>
+                <p className="text-xs text-muted-foreground">
+                  Comprado em {new Date(o.compradoEm).toLocaleDateString("pt-BR")}
+                </p>
+                <p className="mt-1 text-xs">
+                  Rendimento/dia: <span className="font-bold text-primary">{p.rendimentoDiario} MT</span>
+                </p>
+                <p className="text-xs">
+                  Total: <span className="font-bold">{p.rendimentoTotal} MT</span>
+                </p>
+                <p className="mt-1 text-[11px] font-bold uppercase">{ativo ? "Ativo" : "Encerrado"}</p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function RoletaView({
+  onBack, onHist, userId,
+}: { onBack: () => void; onHist: () => void; userId: string }) {
+  const user = useStore(() => currentUser());
+  void userId;
+  const chances = user?.chancesRoleta ?? 0;
+  const [angulo, setAngulo] = useState(0);
+  const [girando, setGirando] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const segmentos = ROLETA_SEGMENTOS;
+  const setor = 360 / segmentos.length;
+
+  const girar = () => {
+    if (girando) return;
+    if (chances <= 0) {
+      setMsg({ ok: false, text: "Você não tem chances. Convide amigos para ganhar!" });
+      return;
+    }
+    setMsg(null);
+    const res = girarRoleta();
+    if (res.erro || res.indice === undefined || res.valor === undefined) {
+      setMsg({ ok: false, text: res.erro || "Erro" });
+      return;
+    }
+    setGirando(true);
+    // a seta está no topo (12h). para alinhar o centro do segmento sob a seta:
+    const centro = res.indice * setor + setor / 2;
+    const voltas = 6 * 360;
+    const jitter = (Math.random() - 0.5) * (setor * 0.6);
+    const destino = voltas - centro + jitter;
+    const base = angulo;
+    const target = base + (destino - (base % 360));
+    setAngulo(target);
+    setTimeout(() => {
+      setGirando(false);
+      setMsg({ ok: true, text: `Parabéns! Você ganhou ${res.valor} MT 🎉` });
+    }, 4200);
+  };
+
+  // cores alternadas para os 6 setores
+  const cores = ["#7c3aed", "#f59e0b", "#ef4444", "#10b981", "#3b82f6", "#ec4899"];
+
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <div className="mb-3 flex items-center justify-between">
+        <button onClick={onBack} className="text-xs font-semibold text-muted-foreground">← Voltar</button>
+        <button
+          onClick={onHist}
+          aria-label="Histórico da roleta"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-secondary hover:border-primary/40"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </div>
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <Dice5 className="h-5 w-5 text-primary" /> Roleta da sorte
+      </h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Chances disponíveis: <span className="font-bold text-primary">{chances}</span> · Convide amigos e ganhe 1 chance a cada primeiro investimento.
+      </p>
+
+      <div className="relative mx-auto mt-5 h-64 w-64">
+        {/* seta */}
+        <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1">
+          <div className="h-0 w-0 border-x-[12px] border-t-[20px] border-x-transparent border-t-primary drop-shadow" />
+        </div>
+        {/* disco */}
+        <div
+          className="h-full w-full rounded-full border-4 border-primary/40 shadow-glow"
+          style={{
+            transform: `rotate(${angulo}deg)`,
+            transition: girando ? "transform 4s cubic-bezier(0.17, 0.67, 0.16, 1)" : "none",
+            background: `conic-gradient(${segmentos
+              .map((_, i) => `${cores[i % cores.length]} ${i * setor}deg ${(i + 1) * setor}deg`)
+              .join(", ")})`,
+          }}
+        >
+          {segmentos.map((v, i) => {
+            const angle = i * setor + setor / 2;
+            return (
+              <div
+                key={i}
+                className="absolute left-1/2 top-1/2 origin-left text-xs font-extrabold text-white drop-shadow"
+                style={{
+                  transform: `rotate(${angle}deg) translate(40px, -8px)`,
+                }}
+              >
+                {v}
+              </div>
+            );
+          })}
+          <div className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-background text-[10px] font-bold text-foreground shadow">
+            MT
+          </div>
+        </div>
+      </div>
+
+      {msg && (
+        <p className={`mt-4 text-center text-sm font-bold ${msg.ok ? "text-primary" : "text-destructive"}`}>
+          {msg.text}
+        </p>
+      )}
+
+      <button
+        onClick={girar}
+        disabled={girando || chances <= 0}
+        className="mt-5 w-full rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
+      >
+        {girando ? "Girando..." : "Girar roleta"}
+      </button>
+    </section>
+  );
+}
+
+function RoletaHistView({ onBack, userId }: { onBack: () => void; userId: string }) {
+  useStore(() => currentUser());
+  const spins = getRoletaSpins()
+    .filter((s) => s.userId === userId)
+    .sort((a, b) => b.createdAt - a.createdAt);
+  const hojeStr = new Date().toDateString();
+  const rendaDiaria = spins
+    .filter((s) => new Date(s.createdAt).toDateString() === hojeStr)
+    .reduce((acc, s) => acc + s.valor, 0);
+  const total = spins.reduce((acc, s) => acc + s.valor, 0);
+
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <button onClick={onBack} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <History className="h-5 w-5 text-primary" /> Histórico da roleta
+      </h2>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <Stat icon={<TrendingUp className="h-4 w-4" />} label="Renda diária" value={`${rendaDiaria} MT`} />
+        <Stat icon={<Sparkles className="h-4 w-4" />} label="Total ganho" value={`${total} MT`} />
+      </div>
+      {spins.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">Nenhum giro ainda.</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-border">
+          {spins.map((s) => (
+            <li key={s.id} className="flex items-center justify-between py-3 text-sm">
+              <div>
+                <p className="font-semibold">Giro da roleta</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(s.createdAt).toLocaleString("pt-BR")}
+                </p>
+              </div>
+              <p className="font-bold text-primary">+{s.valor} MT</p>
+            </li>
+          ))}
         </ul>
       )}
     </section>

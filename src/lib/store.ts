@@ -61,6 +61,7 @@ export interface Usuario {
   contaVincMetodo?: "e-mola" | "mpesa";
   contaVincNumero?: string;
   contaVincNome?: string;
+  chancesRoleta?: number;
 }
 
 export interface FreebieClaim {
@@ -78,6 +79,7 @@ const KEYS = {
   freebies: "rj.freebies",
   fundos: "rj.fundoOrders",
 };
+const ROLETA_KEY = "rj.roletaSpins";
 
 // VIP 1 a VIP 10 — 2 por linha, vão até VIP 10
 export const PRODUTOS: Produto[] = [
@@ -167,6 +169,7 @@ export function getUsers(): Usuario[] {
       u.saldoProduzido = 0;
       changed = true;
     }
+    if (u.chancesRoleta === undefined) { u.chancesRoleta = 0; changed = true; }
     // mantém saldo total = recarga + produzido
     const total = (u.saldoRecarga ?? 0) + (u.saldoProduzido ?? 0);
     if (u.saldo !== total) { u.saldo = total; changed = true; }
@@ -272,6 +275,9 @@ export function comprarFundo(fundoId: string, valor: number): string | null {
           userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
           status: "aprovado", createdAt: Date.now(),
         });
+      }
+      if (nivel === 0) {
+        users[refIdx].chancesRoleta = (users[refIdx].chancesRoleta ?? 0) + 1;
       }
       atualRef = users[refIdx].referredBy;
     }
@@ -461,6 +467,9 @@ export function comprarProduto(produtoId: string): string | null {
           userId: users[refIdx].id, tipo: "indicacao", valor: bonus,
           status: "aprovado", createdAt: Date.now(),
         });
+      }
+      if (nivel === 0) {
+        users[refIdx].chancesRoleta = (users[refIdx].chancesRoleta ?? 0) + 1;
       }
       atualRef = users[refIdx].referredBy;
     }
@@ -694,6 +703,58 @@ export function vincularConta(metodo: "e-mola" | "mpesa", numero: string, nome: 
   users[idx].contaVincNome = nome.trim();
   saveUsers(users);
   return null;
+}
+
+// ====== ROLETA DA SORTE ======
+// 6 segmentos. A seta NUNCA pode parar em 12121 nem em 212.
+export const ROLETA_SEGMENTOS: number[] = [2, 12, 212, 1212, 12121, 121];
+const ROLETA_PROIBIDOS = new Set<number>([12121, 212]);
+
+export interface RoletaSpin {
+  id: string;
+  userId: string;
+  valor: number;
+  createdAt: number;
+  indice: number;
+}
+
+export function getRoletaSpins(): RoletaSpin[] {
+  return read<RoletaSpin[]>(ROLETA_KEY, []);
+}
+function saveRoletaSpins(list: RoletaSpin[]) { write(ROLETA_KEY, list); }
+
+export function getChancesRoleta(): number {
+  const u = currentUser();
+  return u?.chancesRoleta ?? 0;
+}
+
+// Retorna { indice, valor } do segmento sorteado (apenas entre permitidos).
+export function sortearSegmentoRoleta(): { indice: number; valor: number } {
+  const permitidos = ROLETA_SEGMENTOS
+    .map((v, i) => ({ v, i }))
+    .filter((x) => !ROLETA_PROIBIDOS.has(x.v));
+  const pick = permitidos[Math.floor(Math.random() * permitidos.length)];
+  return { indice: pick.i, valor: pick.v };
+}
+
+export function girarRoleta(): { erro?: string; valor?: number; indice?: number } {
+  const u = currentUser();
+  if (!u) return { erro: "Não autenticado" };
+  if ((u.chancesRoleta ?? 0) <= 0) return { erro: "Sem chances disponíveis" };
+  const sorteio = sortearSegmentoRoleta();
+  const users = getUsers();
+  const idx = users.findIndex((x) => x.id === u.id);
+  users[idx].chancesRoleta = (users[idx].chancesRoleta ?? 0) - 1;
+  users[idx].saldoProduzido = (users[idx].saldoProduzido ?? 0) + sorteio.valor;
+  users[idx].saldo = (users[idx].saldoRecarga ?? 0) + (users[idx].saldoProduzido ?? 0);
+  saveUsers(users);
+  const list = getRoletaSpins();
+  list.push({
+    id: "r_" + Math.random().toString(36).slice(2, 10),
+    userId: u.id, valor: sorteio.valor, indice: sorteio.indice, createdAt: Date.now(),
+  });
+  saveRoletaSpins(list);
+  return { valor: sorteio.valor, indice: sorteio.indice };
 }
 
 import { useEffect, useState } from "react";
