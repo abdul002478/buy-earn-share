@@ -639,28 +639,44 @@ function RoletaView({
           style={{
             transform: `rotate(${angulo}deg)`,
             transition: girando ? "transform 4s cubic-bezier(0.17, 0.67, 0.16, 1)" : "none",
-            background: `conic-gradient(${segmentos
-              .map((_, i) => `${cores[i % cores.length]} ${i * setor}deg ${(i + 1) * setor}deg`)
-              .join(", ")})`,
           }}
         >
-          {segmentos.map((v, i) => {
-            const angle = i * setor + setor / 2;
-            return (
-              <div
-                key={i}
-                className="absolute left-1/2 top-1/2 origin-left text-xs font-extrabold text-white drop-shadow"
-                style={{
-                  transform: `rotate(${angle}deg) translate(40px, -8px)`,
-                }}
-              >
-                {v}
-              </div>
-            );
-          })}
-          <div className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-background text-[10px] font-bold text-foreground shadow">
-            MT
-          </div>
+          <svg viewBox="-100 -100 200 200" className="h-full w-full -rotate-90">
+            {segmentos.map((v, i) => {
+              const a0 = (i * setor) * Math.PI / 180;
+              const a1 = ((i + 1) * setor) * Math.PI / 180;
+              const r = 100;
+              const x0 = r * Math.cos(a0), y0 = r * Math.sin(a0);
+              const x1 = r * Math.cos(a1), y1 = r * Math.sin(a1);
+              const large = setor > 180 ? 1 : 0;
+              const path = `M 0 0 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+              const mid = (i * setor + setor / 2) * Math.PI / 180;
+              const tx = (r * 0.62) * Math.cos(mid);
+              const ty = (r * 0.62) * Math.sin(mid);
+              const rotDeg = i * setor + setor / 2 + 90;
+              return (
+                <g key={i}>
+                  <path d={path} fill={cores[i % cores.length]} stroke="#fff" strokeWidth={2} />
+                  <g transform={`translate(${tx} ${ty}) rotate(${rotDeg})`}>
+                    <rect x={-16} y={-10} width={32} height={20} rx={4} fill="rgba(0,0,0,0.35)" />
+                    <text
+                      x={0}
+                      y={0}
+                      fill="#fff"
+                      fontSize={13}
+                      fontWeight={800}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                    >
+                      {v}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+            <circle r={18} fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth={2} />
+          </svg>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-bold">MT</div>
         </div>
       </div>
 
