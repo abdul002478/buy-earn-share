@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { currentUser, getEquipe, useStore } from "@/lib/store";
+import { currentUser, getEquipe, getUsers, getOrders, getFundoCompras, PRODUTOS, useStore } from "@/lib/store";
 import { useEffect, useState } from "react";
 import { Copy, Users, Gift } from "lucide-react";
 
@@ -18,6 +18,24 @@ function ConvidePage() {
   if (!user) return null;
 
   const equipe = getEquipe(user.refCode);
+  const users = getUsers();
+  const orders = getOrders();
+  const fundos = getFundoCompras();
+  const ganhoDe = (telefone: string): number => {
+    const inv = users.find((u) => u.telefone === telefone && u.referredBy === user.refCode);
+    if (!inv) return 0;
+    const compras: { valor: number; quando: number }[] = [];
+    for (const o of orders.filter((x) => x.userId === inv.id)) {
+      const p = PRODUTOS.find((x) => x.id === o.produtoId);
+      if (p && !p.bonus) compras.push({ valor: p.preco, quando: o.compradoEm });
+    }
+    for (const f of fundos.filter((x) => x.userId === inv.id)) {
+      compras.push({ valor: f.valor, quando: f.compradoEm });
+    }
+    if (compras.length === 0) return 0;
+    compras.sort((a, b) => a.quando - b.quando);
+    return Math.floor(compras[0].valor * 0.25);
+  };
   const link = typeof window !== "undefined"
     ? `${window.location.origin}/cadastro?ref=${user.refCode}`
     : `/cadastro?ref=${user.refCode}`;
@@ -62,17 +80,27 @@ function ConvidePage() {
             </p>
           ) : (
             <ul className="mt-3 divide-y divide-border">
-              {equipe.map((m, i) => (
-                <li key={i} className="flex items-center justify-between py-3 text-sm">
-                  <div>
-                    <p className="font-semibold">{m.nome}</p>
-                    <p className="text-xs text-muted-foreground">{m.telefone}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(m.criadoEm).toLocaleDateString("pt-BR")}
-                  </span>
-                </li>
-              ))}
+              {equipe.map((m, i) => {
+                const ganho = ganhoDe(m.telefone);
+                return (
+                  <li key={i} className="flex items-center justify-between py-3 text-sm">
+                    <div>
+                      <p className="font-semibold">{m.nome}</p>
+                      <p className="text-xs text-muted-foreground">{m.telefone}</p>
+                    </div>
+                    <div className="text-right">
+                      {ganho > 0 ? (
+                        <p className="font-bold text-primary">+{ganho} MZN</p>
+                      ) : (
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Sem investimento</p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(m.criadoEm).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
