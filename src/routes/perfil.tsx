@@ -7,6 +7,7 @@ import {
   FUNDOS, comprarFundo, creditarFundos, getFundoCompras,
   getVipNiveis,
   girarRoleta, getRoletaSpins, ROLETA_SEGMENTOS,
+  getUsers,
 } from "@/lib/store";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -741,7 +742,7 @@ function RoletaHistView({ onBack, userId }: { onBack: () => void; userId: string
 
 function HistoricoPlataformaView({ onBack }: { onBack: () => void }) {
   useStore(() => currentUser());
-  const users = (typeof window !== "undefined") ? require("@/lib/store").getUsers() as Array<{ id: string; nome: string }> : [];
+  const users = getUsers();
   const txs = getTxs().sort((a, b) => b.createdAt - a.createdAt);
   const nomeDe = (id: string) => users.find((u) => u.id === id)?.nome ?? id;
   const totalAprovado = txs.filter((t) => t.status === "aprovado").reduce((a, t) => a + t.valor, 0);
