@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Zap } from "lucide-react";
+import { Shield, Zap } from "lucide-react";
 import { currentUser, useStore } from "@/lib/store";
 
 const TITULOS: Record<string, string> = {
@@ -39,6 +39,17 @@ export function SiteHeader() {
               <Link to="/cadastro" className="rounded-lg bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]">Cadastrar</Link>
             </>
           </div>
+        )}
+
+        {user?.isAdmin && path !== "/admin" && (
+          <Link
+            to="/admin"
+            aria-label="Painel ADM"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
+          >
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Painel ADM</span>
+          </Link>
         )}
       </div>
     </header>
