@@ -703,10 +703,6 @@ function RoletaHistView({ onBack, userId }: { onBack: () => void; userId: string
   const spins = getRoletaSpins()
     .filter((s) => s.userId === userId)
     .sort((a, b) => b.createdAt - a.createdAt);
-  const hojeStr = new Date().toDateString();
-  const rendaDiaria = spins
-    .filter((s) => new Date(s.createdAt).toDateString() === hojeStr)
-    .reduce((acc, s) => acc + s.valor, 0);
   const total = spins.reduce((acc, s) => acc + s.valor, 0);
 
   return (
@@ -715,8 +711,7 @@ function RoletaHistView({ onBack, userId }: { onBack: () => void; userId: string
       <h2 className="flex items-center gap-2 text-lg font-bold">
         <History className="h-5 w-5 text-primary" /> Histórico da roleta
       </h2>
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <Stat icon={<TrendingUp className="h-4 w-4" />} label="Renda diária" value={`${rendaDiaria} MT`} />
+      <div className="mt-3 grid grid-cols-1 gap-3">
         <Stat icon={<Sparkles className="h-4 w-4" />} label="Total ganho" value={`${total} MT`} />
       </div>
       {spins.length === 0 ? (
@@ -741,15 +736,16 @@ function RoletaHistView({ onBack, userId }: { onBack: () => void; userId: string
 }
 
 function HistoricoPlataformaView({ onBack }: { onBack: () => void }) {
-  useStore(() => currentUser());
-  const users = getUsers();
-  const txs = getTxs().sort((a, b) => b.createdAt - a.createdAt);
-  const nomeDe = (id: string) => users.find((u) => u.id === id)?.nome ?? id;
+  const user = useStore(() => currentUser());
+  if (!user) return null;
+  const txs = getTxs()
+    .filter((t) => t.userId === user.id)
+    .sort((a, b) => b.createdAt - a.createdAt);
   const totalAprovado = txs.filter((t) => t.status === "aprovado").reduce((a, t) => a + t.valor, 0);
   return (
     <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
       <button onClick={onBack} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
-      <h2 className="text-lg font-bold">Histórico da plataforma</h2>
+      <h2 className="text-lg font-bold">Meu histórico</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Total movimentado (aprovado): <span className="font-bold text-primary">{totalAprovado} MT</span> · {txs.length} transações
       </p>
@@ -762,7 +758,7 @@ function HistoricoPlataformaView({ onBack }: { onBack: () => void }) {
               <div className="min-w-0">
                 <p className="font-semibold capitalize">{t.tipo}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {nomeDe(t.userId)} · {new Date(t.createdAt).toLocaleString("pt-BR")}{t.metodo ? ` · ${t.metodo}` : ""}
+                  {new Date(t.createdAt).toLocaleString("pt-BR")}{t.metodo ? ` · ${t.metodo}` : ""}
                 </p>
               </div>
               <div className="text-right">
