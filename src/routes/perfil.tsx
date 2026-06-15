@@ -738,3 +738,43 @@ function RoletaHistView({ onBack, userId }: { onBack: () => void; userId: string
     </section>
   );
 }
+
+function HistoricoPlataformaView({ onBack }: { onBack: () => void }) {
+  useStore(() => currentUser());
+  const users = (typeof window !== "undefined") ? require("@/lib/store").getUsers() as Array<{ id: string; nome: string }> : [];
+  const txs = getTxs().sort((a, b) => b.createdAt - a.createdAt);
+  const nomeDe = (id: string) => users.find((u) => u.id === id)?.nome ?? id;
+  const totalAprovado = txs.filter((t) => t.status === "aprovado").reduce((a, t) => a + t.valor, 0);
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
+      <button onClick={onBack} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
+      <h2 className="text-lg font-bold">Histórico da plataforma</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Total movimentado (aprovado): <span className="font-bold text-primary">{totalAprovado} MT</span> · {txs.length} transações
+      </p>
+      {txs.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">Nenhuma transação ainda.</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-border">
+          {txs.map((t) => (
+            <li key={t.id} className="flex items-center justify-between py-3 text-sm">
+              <div className="min-w-0">
+                <p className="font-semibold capitalize">{t.tipo}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {nomeDe(t.userId)} · {new Date(t.createdAt).toLocaleString("pt-BR")}{t.metodo ? ` · ${t.metodo}` : ""}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold">{t.valor} MT</p>
+                <span className={`text-[10px] font-bold uppercase ${
+                  t.status === "aprovado" ? "text-primary" :
+                  t.status === "negado" ? "text-destructive" : "text-accent-foreground"
+                }`}>{t.status}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
