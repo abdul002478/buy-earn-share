@@ -57,7 +57,6 @@ function PerfilPage() {
     setAntiga(""); setNova(""); setConfirmar("");
   };
 
-  const txs = getTxs().filter((t) => t.userId === user.id).sort((a, b) => b.createdAt - a.createdAt);
   const orders = getOrders().filter((o) => o.userId === user.id);
   const rendimento = calcularRendimento(user.id);
 
@@ -161,33 +160,7 @@ function PerfilPage() {
         )}
 
         {view === "historico" && (
-          <section className="mt-5 rounded-2xl border border-border bg-gradient-card p-5 shadow-card">
-            <button onClick={() => setView("main")} className="mb-3 text-xs font-semibold text-muted-foreground">← Voltar</button>
-            <h2 className="text-lg font-bold">Histórico de transações</h2>
-            {txs.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">Nenhuma transação ainda.</p>
-            ) : (
-              <ul className="mt-3 divide-y divide-border">
-                {txs.map((t) => (
-                  <li key={t.id} className="flex items-center justify-between py-3 text-sm">
-                    <div>
-                      <p className="font-semibold capitalize">{t.tipo}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(t.createdAt).toLocaleString("pt-BR")}{t.metodo ? ` · ${t.metodo}` : ""}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">{t.valor} MT</p>
-                      <span className={`text-[10px] font-bold uppercase ${
-                        t.status === "aprovado" ? "text-primary" :
-                        t.status === "negado" ? "text-destructive" : "text-accent-foreground"
-                      }`}>{t.status}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <HistoricoPlataformaView onBack={() => setView("main")} />
         )}
 
         {view === "produtos" && (
