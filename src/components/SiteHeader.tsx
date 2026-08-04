@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Shield, Zap } from "lucide-react";
 import { currentUser, useStore } from "@/lib/store";
