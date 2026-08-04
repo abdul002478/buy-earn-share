@@ -30,14 +30,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "RecargaJá — Recarregue, invista e ganhe" },
+      { name: "description", content: "Planos VIP, oferta grátis diária, check-in e bônus por convite." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "RecargaJá — Recarregue, invista e ganhe" },
+      { property: "og:description", content: "Planos VIP, oferta grátis diária, check-in e bônus por convite." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "RecargaJá — Recarregue, invista e ganhe" },
+      { name: "twitter:description", content: "Planos VIP, oferta grátis diária, check-in e bônus por convite." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/68d1a630-c297-481e-aa8d-78d1e2d996f3/id-preview-07f78b8f--d3290bf0-f699-4abd-b4b4-df4210b3da48.lovable.app-1781528824361.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/68d1a630-c297-481e-aa8d-78d1e2d996f3/id-preview-07f78b8f--d3290bf0-f699-4abd-b4b4-df4210b3da48.lovable.app-1781528824361.png" },
     ],
     links: [
       {
