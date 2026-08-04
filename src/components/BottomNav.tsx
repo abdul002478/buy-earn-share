@@ -11,8 +11,15 @@ const items = [
 ];
 
 export function BottomNav() {
+  const [mounted, setMounted] = React.useState(false);
   const user = useStore(() => currentUser());
   const path = useRouterState({ select: (s) => s.location.pathname });
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return <div className="h-20" aria-hidden />;
   if (!user) return null;
   return (
     <>
